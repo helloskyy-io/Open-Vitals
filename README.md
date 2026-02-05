@@ -45,6 +45,8 @@ At this stage, OpenVitals focuses on:
 
 This phase is intentionally limited in scope to prioritize correctness, reproducibility, and research findings.
 
+For detailed information about the Phase 0 research project, see [`docs/development/Phase0_research_project.md`](docs/development/Phase0_research_project.md).
+
 ---
 
 ## Quickstart
@@ -75,7 +77,7 @@ OpenVitals is designed to be a community‑driven project. Contributions will be
 * Analytics metrics and visualizations
 * Documentation and examples
 
-A `CONTRIBUTING.md` guide and labeled `good-first-issue` tasks will be added as the project stabilizes.
+See [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) for contribution guidelines. 🚧 **Coming soon** — labeled `good-first-issue` tasks will be added as the project stabilizes.
 
 ---
 
@@ -87,20 +89,23 @@ For users who prefer not to run their own infrastructure, a **managed hosting op
 
 ---
 
-## License
+## License & Privacy
 
 OpenVitals is released under a source‑available license based on the Business Source License (BUSL) 1.1.
 
 This license allows individuals and organizations to view, modify, and self‑host the software freely for personal or internal use, while restricting the creation of directly competing commercial or SaaS offerings without a commercial license.
 
-See the `/docs/LICENSE` file for full details.
+* **License:** See [`docs/LICENSE`](docs/LICENSE) for full license details
+* **Privacy:** See [`docs/PRIVACY.md`](docs/PRIVACY.md) for privacy policy and data handling practices
 
 ---
 
 ## Project Status
 
+For the complete long-term platform roadmap and development phases, see [`docs/ROADMAP.md`](docs/ROADMAP.md).
+
+
 * Phase 0: Research & Prototype — **In Progress**
-* Public roadmap: coming soon
 
 ---
 
