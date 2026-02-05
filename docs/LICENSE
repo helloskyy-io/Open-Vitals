@@ -1,0 +1,50 @@
+# Business Source License 1.1
+
+License text copyright © 2017 MariaDB Corporation Ab, All Rights Reserved.
+
+"Business Source License" is a trademark of MariaDB Corporation Ab.
+
+---
+
+## Terms
+
+The Licensor hereby grants you the right to copy, modify, create derivative works, redistribute, and make non-production use of the Licensed Work, provided that you do not violate the restrictions in this License.
+
+### Licensor
+
+HelloSkyy LLC
+
+### Licensed Work
+
+OpenVitals
+
+### Additional Use Grant
+
+You may use, modify, and self-host the Licensed Work for:
+
+* Personal use
+* Academic and research use
+* Internal use within an organization
+* Testing, evaluation, and non-commercial deployments
+
+You may **not** use the Licensed Work to provide a competing commercial product or service, including but not limited to offering the Licensed Work or a substantially similar service as a hosted or managed SaaS offering, without obtaining a separate commercial license from the Licensor.
+
+### Change Date
+
+The Change Date is four (4) years from the date of each software version’s release.
+
+### Change License
+
+On the Change Date, the Licensed Work will automatically be made available under the Apache License, Version 2.0.
+
+---
+
+## Disclaimer
+
+THE LICENSED WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE LICENSED WORK OR THE USE OR OTHER DEALINGS IN THE LICENSED WORK.
+
+---
+
+## Notes
+
+This license is intended to encourage open collaboration and self-hosted use while ensuring the long-term sustainability of the OpenVitals project. For commercial licensing inquiries, please contact the Licensor.
