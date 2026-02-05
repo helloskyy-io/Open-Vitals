@@ -1,3 +1,5 @@
+<img src="hs_logo.jpg" alt="HelloSkyy Logo" width="100%"/>
+
 # OpenVitals
 
 **Own your health data. Understand your body. On your terms.**
