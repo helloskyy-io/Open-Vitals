@@ -46,10 +46,11 @@ data/
 *.log
 logs/
 
-# Environment variables
+# Environment and config (local copies from templates/, never commit)
 .env
 .env.local
 .env.*.local
+config.yaml
 
 # Temporal
 temporal-data/
