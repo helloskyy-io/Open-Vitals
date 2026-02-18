@@ -1,17 +1,20 @@
 OpenVitals Repo Folder Structure (planned)
 
 openvitals/
-├── data/                                   # ALWAYS gitignored (local only)
+├── data/                                       # ALWAYS gitignored (local only)
 │   ├── processed/
 │   ├── raw/
 │   │   ├── apple_health/
 │   │   └── google_fit/
-│   └── README.md                           # rules for local handling
+│   └── README.md                               # rules for local handling
 ├── docker/
 │   ├── .dockerignore
 │   ├── docker-compose.yml
 │   └── Dockerfile
 ├── docs/
+│   ├── development/
+│   │   ├── Phase0_research_project.md          # class project proposal + Phase 0 checklist
+│   │   └── phase0_file_structure_alignment.md
 │   ├── metrics/
 │   │   └── set_a_definitions.md
 │   ├── source_schemas/
@@ -19,7 +22,7 @@ openvitals/
 │   │   └── google_fit.md
 │   ├── canonical_schema_v0.md
 │   ├── dataset_description.md
-│   ├── file_structure.txt                  # this file
+│   ├── file_structure.txt                      # this file
 │   ├── phase0_execution_checklist.md
 │   ├── PRIVACY.md
 │   ├── ROADMAP.md
@@ -79,7 +82,7 @@ openvitals/
 │       │   └── canonical.py
 │       ├── orchestration/
 │       │   └── temporal/
-│       │       ├── activities/                # shared library of reusable activities
+│       │       ├── activities/                 # shared library of reusable activities
 │       │       │   ├── __init__.py
 │       │       │   ├── compute_metrics.py
 │       │       │   ├── db_migrate.py
@@ -128,6 +131,6 @@ openvitals/
 
 Notes
 - Phase 0 runs without Django; CLI + notebooks generate figures for the class.
-- Phase 1 adds services/web (Django API + frontend) that reads Postgres + triggers Temporal.
-- The "orchestration/" package keeps Temporal code isolated from core parsing/analytics logic.
+- Phase 1 adds services/backend (Django API + frontend) and services/temporal-workers; both read Postgres and trigger Temporal.
+- The orchestration/temporal package keeps Temporal code isolated from core parsing/analytics logic.
 - data/ is always local-only (raw exports must never be committed).
