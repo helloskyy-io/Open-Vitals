@@ -1,0 +1,9 @@
+# OpenVitals — shared Python deps (host venv, worker, Jupyter)
+# Single source of truth; install with: pip install -r requirements.txt
+
+# Temporal worker
+temporalio>=1.8.0
+
+# Config: read/write YAML (bootstrap, scripts)
+ruamel.yaml>=0.18.0   # preserves comments when editing
+pyyaml>=6.0           # safe_load for reading

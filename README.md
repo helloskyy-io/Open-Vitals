@@ -68,6 +68,8 @@ For detailed information about the Phase 0 research project, see [`docs/developm
 
 Deployment starts with the **Temporal stack** (database, server, UI) and the **temporal-worker**. Bootstrap is idempotent and prepares the environment so that the Genesis workflow (via `genesis.sh`) can deploy the OpenVitals app DB and run migrations next.
 
+**Environment for local work (optional):** To use the same Python packages on the host (notebooks, CLI), use the venv bootstrap creates: from repo root run **`source .venv/bin/activate`**. Or use conda: **`conda create -n openvitals python=3.11`** then **`pip install -r requirements.txt`**; then **`conda activate openvitals`**.
+
 **Bootstrap scripts:** **`bootstrap.linux.remote.sh`** — production/VM install via curl (creates `/opt/open-vitals`, clones repo, runs bootstrap). **`bootstrap.linux.sh`** — run from repo root (dev or after remote clone). Both scripts accept the same **flags**; the remote script passes them through to the main bootstrap. Windows and macOS bootstrap scripts are planned for a future release.
 
 #### Bootstrap flags (both entry points)

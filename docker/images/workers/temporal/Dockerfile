@@ -1,11 +1,12 @@
 # OpenVitals Temporal worker
 # Build from repo root: docker build -f docker/images/workers/temporal/Dockerfile .
+# Uses repo-root requirements.txt (same deps as host venv and Jupyter).
 
 FROM python:3.11-slim AS builder
 
 WORKDIR /app
 
-COPY docker/images/workers/temporal/requirements.txt /app/requirements.txt
+COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 FROM python:3.11-slim

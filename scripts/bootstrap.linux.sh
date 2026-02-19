@@ -8,6 +8,7 @@
 #
 # This script:
 # - Installs Docker and Docker Compose (v2) if missing (Linux, apt; requires sudo)
+# - Ensures a Python venv at .venv with requirements.txt (same deps as worker/Jupyter)
 # - Creates config.yaml and .env from templates/ if they don't exist
 #   (auto-generates Temporal Postgres password in .env)
 # - Starts Temporal infrastructure via docker compose
@@ -50,6 +51,9 @@ ENV_FILE="$REPO_ROOT/.env"
 CONFIG_TEMPLATE="$REPO_ROOT/templates/.config.template"
 ENV_TEMPLATE="$REPO_ROOT/templates/.env.template"
 COMPOSE_DIR="$REPO_ROOT/docker/compose"
+REQUIREMENTS_FILE="$REPO_ROOT/requirements.txt"
+VENV_DIR="$REPO_ROOT/.venv"
+VENV_PYTHON="${VENV_DIR}/bin/python"
 
 # --- Logging ---
 
@@ -136,7 +140,50 @@ verify_repo_files() {
     log_error "Compose file not found: $COMPOSE_DIR/20-workers.yml"
     return 1
   fi
+  if [[ ! -f "$REQUIREMENTS_FILE" ]]; then
+    log_error "requirements.txt not found at $REQUIREMENTS_FILE"
+    return 1
+  fi
   log_info "Compose dir: $COMPOSE_DIR"
+}
+
+# --- Ensure Python venv exists and has requirements (for config edit and parity with containers) ---
+ensure_venv() {
+  log_info "Ensuring Python venv and requirements..."
+
+  if ! command -v python3 &>/dev/null; then
+    log_error "python3 not found; install Python 3.9+ and run bootstrap again"
+    return 1
+  fi
+
+  # On Debian/Ubuntu, venv module may require python3-venv
+  if ! python3 -m venv --help &>/dev/null; then
+    if [[ -f /etc/os-release ]] && grep -qEi 'ubuntu|debian' /etc/os-release 2>/dev/null && command -v apt-get &>/dev/null; then
+      log_info "Installing python3-venv (apt)..."
+      apt-get update -qq
+      apt-get install -y python3-venv
+    else
+      log_error "python3-venv not available; install the venv module for your platform"
+      return 1
+    fi
+  fi
+
+  if [[ ! -d "$VENV_DIR" ]]; then
+    log_info "Creating venv at $VENV_DIR..."
+    python3 -m venv "$VENV_DIR"
+  else
+    log_info "Venv already exists at $VENV_DIR (idempotent)"
+  fi
+
+  log_info "Installing requirements from $REQUIREMENTS_FILE..."
+  if ! "$VENV_PYTHON" -m pip install -q --upgrade pip 2>/dev/null; then
+    "$VENV_PYTHON" -m pip install --upgrade pip
+  fi
+  if ! "$VENV_PYTHON" -m pip install -q -r "$REQUIREMENTS_FILE"; then
+    log_error "Failed to install requirements; check $REQUIREMENTS_FILE"
+    return 1
+  fi
+  log_info "Venv ready: $VENV_PYTHON"
 }
 
 # --- Read deployment env from config.yaml (dev | test | prod); set OVERRIDE_FILE ---
@@ -154,9 +201,21 @@ read_deployment_env() {
       log_error "config.yaml not found at $CONFIG_FILE (run script once to create from template)"
       return 1
     fi
-    if command -v python3 &>/dev/null; then
+    if [[ -x "$VENV_PYTHON" ]]; then
+      env_value=$("$VENV_PYTHON" -c "
+try:
+    import yaml
+    with open('$CONFIG_FILE', 'r') as f:
+        config = yaml.safe_load(f)
+    env = (config or {}).get('temporal', {}).get('deployment_env') or 'dev'
+    if env not in ('dev', 'test', 'prod'):
+        env = 'dev'
+    print(env)
+except Exception:
+    print('dev')
+" 2>/dev/null) || env_value="dev"
+    elif command -v python3 &>/dev/null; then
       env_value=$(python3 -c "
-import sys
 try:
     import yaml
     with open('$CONFIG_FILE', 'r') as f:
@@ -249,18 +308,14 @@ create_config_files() {
   fi
 }
 
-# --- Update config.yaml project_root to actual repo path (preserves comments; best-effort) ---
+# --- Update config.yaml project_root to actual repo path (preserves comments; uses venv) ---
 update_config_project_root() {
   if [[ ! -f "$CONFIG_FILE" ]]; then
     return 0
   fi
-  if ! python3 -c "import ruamel.yaml" 2>/dev/null; then
-    log_warn "ruamel.yaml not installed; config.yaml project_root not updated (compose will use REPO_ROOT env)"
-    return 0
-  fi
   export OPENVITALS_REPO_ROOT_FOR_CONFIG="$REPO_ROOT"
   export OPENVITALS_CONFIG_PATH="$CONFIG_FILE"
-  if python3 -c '
+  if "$VENV_PYTHON" -c '
 import os
 import ruamel.yaml
 path = os.environ.get("OPENVITALS_REPO_ROOT_FOR_CONFIG", "")
@@ -280,6 +335,8 @@ with open(config_path, "w") as f:
     yaml.dump(data, f)
 ' 2>/dev/null; then
     log_info "Updated config.yaml openvitals.project_root to $REPO_ROOT"
+  else
+    log_warn "Could not update project_root in config.yaml (compose will use REPO_ROOT env)"
   fi
 }
 
@@ -492,16 +549,11 @@ apply_bootstrap_env_to_config() {
     log_error "Config helper not found: $helper"
     return 1
   fi
-  if ! python3 "$helper" --config "$CONFIG_FILE" --set temporal.deployment_env "$env_value" 2>/dev/null; then
-    if python3 -c "import ruamel.yaml" 2>/dev/null; then
-      log_error "Failed to write temporal.deployment_env to config.yaml"
-      return 1
-    else
-      log_warn "ruamel.yaml not installed; deployment_env not persisted (used for this run only)"
-    fi
-  else
-    log_info "Set temporal.deployment_env=$env_value in config.yaml"
+  if ! "$VENV_PYTHON" "$helper" --config "$CONFIG_FILE" --set temporal.deployment_env "$env_value"; then
+    log_error "Failed to write temporal.deployment_env to config.yaml (venv: $VENV_PYTHON)"
+    return 1
   fi
+  log_info "Set temporal.deployment_env=$env_value in config.yaml"
   return 0
 }
 
@@ -548,6 +600,9 @@ main() {
   echo ""
 
   verify_repo_files || exit 1
+  echo ""
+
+  ensure_venv || exit 1
   echo ""
 
   create_config_files || exit 1
