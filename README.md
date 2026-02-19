@@ -158,15 +158,16 @@ Safe to run multiple times; existing `config.yaml` and `.env` are left unchanged
 
 ### Manual steps (when and what to edit)
 
-- **During first run:** If the script just created config, it pauses. You can edit `.env` (e.g. to change Temporal or OpenVitals DB passwords) and/or `config.yaml` (e.g. `temporal.deployment_env`, ports), or press **y** to accept defaults. Both passwords are already generated when `.env` is created from the template.
-- **Between bootstrap and Genesis:** Before running `scripts/genesis.sh`, you can change `openvitals.project_root` or other settings in `config.yaml`, or secrets in `.env`, if needed. The real place for manual configuration is this gap; the in-script pause is optional.
+- **During first run:** If the script just created config, it pauses so you can edit **Temporal** settings (e.g. DB password, port) in `.env` and `config.yaml`, or press **y** to accept defaults. That pause is only for Temporal; leave it as-is.
+- **Between bootstrap and Genesis:** After bootstrap has finished and before you run **`scripts/genesis.sh`**, this is the right time to change **OpenVitals** (and later, other app) settings. If you want to change OpenVitals database config (user, password, port, db name), edit **`.env`** and **`config.yaml`** now; then run `scripts/genesis.sh`. Otherwise Genesis will use the defaults from the template and the generated password. More options will live in this gap as we build out the application.
 
 ### After deployment
 
 - Open **Temporal UI** at the printed URL (e.g. `http://127.0.0.1:8234`).
 - **Verify** that the Temporal UI is up and accessible in your browser before running the Genesis workflow.
-- Containers: temporal-db, temporal-server, temporal-ui, **temporal-worker**.
+- Containers: temporal-db, temporal-server, temporal-ui, **temporal-worker**. The worker has **Docker socket access** so Genesis can run `docker compose` (e.g. bring up OpenVitals Postgres); treat it as a trusted orchestration component.
 - When ready for the next step (Genesis workflow to deploy OpenVitals DB and run migrations), run: **`sudo ./scripts/genesis.sh`**.
+- After changing workflow or activity code, rebuild the worker so it runs the new code: **`./scripts/rebuild-worker.sh`** (then run genesis again to test). After changing **`requirements.txt`**, run **`./scripts/rebuild-worker.sh`** (worker only) or **`./scripts/update-requirements.sh`** (take down all containers, re-run bootstrap to refresh venv and rebuild all containers; volumes and config preserved).
 - For Temporal deployment, architecture, and workflow/activity standards, see [Temporal standards](docs/standards/temporal_standards.md).
 
 ### Resetting the environment (dev/test)

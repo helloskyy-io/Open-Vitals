@@ -3,7 +3,7 @@
 # OpenVitals — Bootstrap / Deploy Temporal (idempotent)
 #
 # Single script that brings the environment up to a running Temporal stack
-# (database, server, UI) for workstations and VMs. Mimics micro-data-center
+# (database, server, UI) for workstations and VMs.
 # public-installer logic: install Docker/Compose if missing, then deploy Temporal.
 #
 # This script:
@@ -156,21 +156,35 @@ ensure_venv() {
     return 1
   fi
 
-  # On Debian/Ubuntu, venv module may require python3-venv
-  if ! python3 -m venv --help &>/dev/null; then
-    if [[ -f /etc/os-release ]] && grep -qEi 'ubuntu|debian' /etc/os-release 2>/dev/null && command -v apt-get &>/dev/null; then
-      log_info "Installing python3-venv (apt)..."
-      apt-get update -qq
-      apt-get install -y python3-venv
+  # On Debian/Ubuntu, venv needs the version-specific package (e.g. python3.12-venv) for ensurepip
+  if [[ -f /etc/os-release ]] && grep -qEi 'ubuntu|debian' /etc/os-release 2>/dev/null && command -v apt-get &>/dev/null; then
+    local py_ver
+    py_ver=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>/dev/null) || true
+    if [[ -n "$py_ver" ]]; then
+      local venv_pkg="python${py_ver}-venv"
+      if ! dpkg -l "$venv_pkg" 2>/dev/null | grep -q '^ii'; then
+        log_info "Installing $venv_pkg (apt) for venv + pip..."
+        apt-get update -qq
+        apt-get install -y "$venv_pkg"
+      fi
     else
-      log_error "python3-venv not available; install the venv module for your platform"
-      return 1
+      apt-get update -qq
+      apt-get install -y python3-venv 2>/dev/null || true
     fi
+  fi
+
+  # Remove broken venv (e.g. created without ensurepip) so we can recreate
+  if [[ -d "$VENV_DIR" ]] && [[ ! -x "$VENV_DIR/bin/pip" ]]; then
+    log_info "Removing broken venv (missing pip) at $VENV_DIR..."
+    rm -rf "$VENV_DIR"
   fi
 
   if [[ ! -d "$VENV_DIR" ]]; then
     log_info "Creating venv at $VENV_DIR..."
-    python3 -m venv "$VENV_DIR"
+    if ! python3 -m venv "$VENV_DIR"; then
+      log_error "Failed to create venv. On Debian/Ubuntu install: apt install python3.X-venv (match your python3 version)"
+      return 1
+    fi
   else
     log_info "Venv already exists at $VENV_DIR (idempotent)"
   fi
@@ -184,6 +198,7 @@ ensure_venv() {
     return 1
   fi
   log_info "Venv ready: $VENV_PYTHON"
+  log_info "Tip: After changing requirements.txt, run ./scripts/rebuild-worker.sh to update the worker image."
 }
 
 # --- Read deployment env from config.yaml (dev | test | prod); set OVERRIDE_FILE ---
@@ -347,8 +362,7 @@ prompt_edit_then_continue() {
   log_info "Config files created — edit if desired, then continue"
   log_info "══════════════════════════════════════════════════════════════"
   echo ""
-  log_info "Edit config.yaml or .env if you want to change the Temporal database password,"
-  log_info "Temporal user name, or port — or press y to accept defaults and build Temporal."
+  log_info "Edit .env or config.yaml to change Temporal DB password or port — or press y to accept defaults and build Temporal."
   echo ""
   local response
   while true; do

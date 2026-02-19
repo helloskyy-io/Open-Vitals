@@ -1,6 +1,6 @@
 # Temporal standards
 
-This document defines how OpenVitals uses **Temporal** for deployment and workflow orchestration: layout (modules, workflows, helpers, activities), three-layer architecture, deployment flow (bootstrap, Genesis, env), and design patterns. It aligns with the micro-data-center approach so both projects share the same conceptual model.
+This document defines how OpenVitals uses **Temporal** for deployment and workflow orchestration: layout (modules, workflows, helpers, activities), three-layer architecture, deployment flow (bootstrap, Genesis, env), and design patterns.
 
 ---
 
@@ -111,6 +111,8 @@ Deployment env can be set at bootstrap via **`--env`** / **`-e`** or **`OPENVITA
 - **Invocation:** User runs **`scripts/genesis.sh`** after bootstrap; the script starts the Genesis workflow and waits for success or reports failure. Secrets and config come from `.env` and `config.yaml` (loaded by activities), not from workflow input.
 - **Manual steps:** Run bootstrap → optionally edit `.env` / `config.yaml` → run Genesis. Full reset is explicit: **`scripts/reset.env.sh`** (per-step confirmation).
 
+**Rebuilding the worker:** Workflow and activity code runs **inside the worker** (the client only sends tasks). After changing workflows or activities, rebuild and restart the worker so it loads the new code: **`scripts/rebuild-worker.sh`**. Optional: **`scripts/rebuild-worker.sh --no-cache`** for a full image rebuild.
+
 ---
 
 ## Best practices
@@ -152,4 +154,4 @@ Paths are relative to `src/openvitals/orchestration/temporal/` unless stated oth
 
 ---
 
-*This standard aligns with the micro-data-center Temporal component standards. When the Genesis workflow and helpers are fully implemented, this doc should be updated to match; the principles and structure above are intended to stay stable.*
+*When the Genesis workflow and helpers are fully implemented, this doc should be updated to match; the principles and structure above are intended to stay stable.*

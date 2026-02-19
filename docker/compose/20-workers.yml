@@ -1,6 +1,9 @@
 # OpenVitals — Temporal worker(s)
 # Single worker "temporal-worker" for Genesis and future ingestion/analytics.
 # REPO_ROOT and ENV must be set when running compose (e.g. by bootstrap script).
+# REPO_ROOT = host path to repo (any path; e.g. ~/Repos/open-vitals or /opt/open-vitals).
+# Files are mounted into the container at /workspace; activities use OPENVITALS_REPO_ROOT=/workspace.
+# Worker has Docker socket access so Genesis activities can run docker compose (docker_compose_up, etc.).
 
 services:
   temporal-worker:
@@ -16,12 +19,18 @@ services:
       - TEMPORAL_PORT=${TEMPORAL_PORT:-7233}
       - TEMPORAL_NAMESPACE=openvitals-${ENV}
       - TASK_QUEUE=bootstrap-${ENV}
+      # In-container path where config, .env, and compose files are mounted
+      - OPENVITALS_REPO_ROOT=/workspace
     networks:
       - openvitals
     volumes:
-      # Mount config and .env so activities can read them (path from REPO_ROOT)
-      - ${REPO_ROOT:-/opt/open-vitals}/config.yaml:/opt/open-vitals/config.yaml:ro
-      - ${REPO_ROOT:-/opt/open-vitals}/.env:/opt/open-vitals/.env:ro
+      # Docker socket so worker can run docker compose (trusted orchestration component)
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Config and secrets
+      - ${REPO_ROOT:?REPO_ROOT must be set (e.g. by bootstrap)}/config.yaml:/workspace/config.yaml:ro
+      - ${REPO_ROOT:?REPO_ROOT must be set (e.g. by bootstrap)}/.env:/workspace/.env:ro
+      # Compose dir so docker_compose_up can run docker compose
+      - ${REPO_ROOT:?REPO_ROOT must be set (e.g. by bootstrap)}/docker/compose:/workspace/docker/compose:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python3", "-c", "import sys; sys.exit(0)"]

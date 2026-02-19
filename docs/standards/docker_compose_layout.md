@@ -1,6 +1,6 @@
 # Docker Compose layout and standard
 
-OpenVitals uses a **numbered base files + environment overrides** layout, aligned with the micro-data-center pattern. This keeps a single source of truth for each concern and lets you switch environments (dev/test/prod) via config without editing base compose files.
+OpenVitals uses a **numbered base files + environment overrides** layout. This keeps a single source of truth for each concern and lets you switch environments (dev/test/prod) via config without editing base compose files.
 
 ## Layout
 
@@ -9,7 +9,9 @@ Compose files live under **`docker/compose/`**:
 - **Base files (load order):**
   - **`00-networks.yml`** — shared networks (e.g. `openvitals`). Load first so all services can attach.
   - **`10-temporal.yml`** — Temporal stack (temporal-db, temporal-server, temporal-ui).
-  - **`20-*.yml`**, **`30-*.yml`**, … — future stacks (OpenVitals DB, workers, backend, etc.) as they are added.
+  - **`20-workers.yml`** — Temporal worker (Genesis, etc.). The worker container has the host **Docker socket** and **compose files** mounted so Genesis activities can run `docker compose` (e.g. ensure OpenVitals Postgres is up). Treat the worker as a trusted orchestration component.
+  - **`25-openvitals-db.yml`** — OpenVitals application Postgres (started by Genesis or manually).
+  - **`30-*.yml`**, … — future stacks (backend, etc.) as they are added.
 - **Override files (one per environment):**
   - **`dev.override.yml`** — dev overrides (selected when `temporal.deployment_env` is `dev`).
   - **`test.override.yml`** — test overrides.

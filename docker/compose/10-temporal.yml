@@ -35,6 +35,9 @@ services:
       - POSTGRES_SEEDS=temporal-db
       - SKIP_DEFAULT_NAMESPACE_CREATION=false
       - FRONTEND_ENABLE_CSRF_PROTECTION=false
+    ports:
+      # Expose gRPC so host-side clients (e.g. scripts/genesis.sh) can connect
+      - "127.0.0.1:7233:7233"
     networks:
       - openvitals
     restart: unless-stopped

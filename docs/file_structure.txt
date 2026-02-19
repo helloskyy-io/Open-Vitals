@@ -1,69 +1,81 @@
 OpenVitals Repo Folder Structure (planned)
 
 openvitals/
-├── data/                                       # ALWAYS gitignored (local only)
+├── data/                                           # ALWAYS gitignored (local only)
 │   ├── processed/
 │   ├── raw/
 │   │   ├── apple_health/
 │   │   └── google_fit/
-│   └── README.md                               # rules for local handling
+│   └── README.md
 ├── docker/
 │   ├── compose/
 │   │   ├── 00-networks.yml
 │   │   ├── 10-temporal.yml
+│   │   ├── 20-workers.yml
+│   │   ├── 25-openvitals-db.yml
 │   │   ├── dev.override.yml
 │   │   ├── prod.override.yml
 │   │   └── test.override.yml
-│   ├── .dockerignore
-│   └── Dockerfile
+│   ├── images/
+│   │   └── workers/
+│   │       └── temporal/
+│   │           └── Dockerfile
+│   └── .dockerignore
 ├── docs/
+│   ├── architecture/
+│   │   └── Tech_Stack.md
 │   ├── assets/
-│   │   └── README.md                           # logo (e.g. hello_skyy.jpg) for README
+│   │   └── README.md
+│   ├── canonical_schema_v0.md                      # (future)
+│   ├── dataset_description.md                      # (future)
 │   ├── development/
-│   │   ├── Phase0_research_project.md          # class project proposal + Phase 0 checklist
-│   │   ├── Temporal_env_and_deployment_plan.md # Temporal dev vs prod env; manual steps bootstrap → Genesis
-│   │   └── phase0_file_structure_alignment.md
+│   │   └── Phase0_research_project.md              # class project proposal + Phase 0 checklist
+│   ├── source_schemas/
+│   │   ├── apple_health.md                         # (future)
+│   │   └── google_fit.md                           # (future)
 │   ├── metrics/
 │   │   └── set_a_definitions.md
-│   ├── source_schemas/
-│   │   ├── apple_health.md
-│   │   └── google_fit.md
-│   ├── canonical_schema_v0.md
-│   ├── dataset_description.md
-│   ├── file_structure.txt                      # this file
-│   ├── phase0_execution_checklist.md
+│   ├── standards/
+│   │   ├── docker_compose_layout.md
+│   │   ├── env_and_config.md
+│   │   ├── temporal_deployment.md
+│   │   └── temporal_standards.md
+│   ├── CONTRIBUTING.md
+│   ├── file_structure.txt                          # this file
+│   ├── LICENSE
 │   ├── PRIVACY.md
 │   ├── ROADMAP.md
-│   ├── standards/
-│   │   ├── docker_compose_layout.md            # numbered base files + env overrides; deployment_env in config
-│   │   └── env_and_config.md                   # .env = secrets only; config.yaml = all other settings
 │   └── TECH_STACK.md
-├── notebooks/                                  # dev-only (not required for running pipeline)
+├── notebooks/                                      # dev-only (not required for running pipeline)
 │   ├── 00_environment_check.ipynb
 │   ├── 10_google_fit_parse.ipynb
 │   ├── 11_apple_health_parse.ipynb
 │   ├── 20_metrics_set_a.ipynb
 │   ├── 30_vendor_comparison.ipynb
 │   └── 40_plots.ipynb
-├── reports/
+├── reports/                                        # (future)
 │   ├── figures/
-│   │   └── README.md                           # captions + purpose for each figure
+│   │   └── README.md                               # captions + purpose for each figure
 │   ├── comparison_summary.md
 │   ├── final_report.md
 │   ├── presentation_outline.md
 │   └── temporal_demo.md
 ├── scripts/
-│   ├── bootstrap.linux.remote.sh               # Prod/VM: curl → /opt/open-vitals, clone, run bootstrap.linux.sh
-│   ├── bootstrap.linux.sh                      # Day-0 bootstrap (Linux); future: bootstrap.windows.sh, bootstrap.mac.sh
-│   ├── doctor.sh                               # health checks
-│   ├── export_figures.sh                       # run plots generation end-to-end
-│   ├── migrate.sh                              # apply sql migrations to openvitals DB
-│   └── seed_demo.sh                            # optional: load tiny synthetic fixtures
-├── services/                                   # reserved for Phase 1+ (no refactor later)
-│   ├── backend/                                # Django app (Phase 1)
-│   │   ├── README.md                           # placeholder: "Phase 1"
+│   ├── lib/
+│   │   ├── config_edit.py
+│   │   └── start_genesis_workflow.py
+│   ├── bootstrap.linux.remote.sh
+│   ├── bootstrap.linux.sh
+│   ├── doctor.sh
+│   ├── genesis.sh
+│   ├── rebuild-worker.sh
+│   ├── reset.env.sh
+│   └── update-requirements.sh
+├── services/                                       # reserved for Phase 1+ (no refactor later)
+│   ├── backend/                                    # Django app (Phase 1)
+│   │   ├── README.md                               # placeholder: "Phase 1"
 │   │   └── (django project files live here later)
-│   └── temporal-workers/                       # Temporal worker process(es)
+│   └── temporal-workers/                           # Temporal worker process(es)
 │       └── (entrypoint runs openvitals.orchestration.temporal.worker)
 ├── sql/
 │   ├── migrations/
@@ -73,59 +85,57 @@ openvitals/
 │   └── openvitals/
 │       ├── adapters/
 │       │   ├── apple_health/
-│       │   │   ├── __init__.py
 │       │   │   ├── parse_heart_rate.py
 │       │   │   ├── parse_sleep.py
 │       │   │   └── parse_steps.py
 │       │   └── google_fit/
-│       │       ├── __init__.py
-│       │       ├── parse_heart_rate.py
-│       │       ├── parse_sleep.py
-│       │       └── parse_steps.py
 │       ├── analytics/
 │       │   ├── __init__.py
-│       │   ├── evaluation.py                   # MAE/RMSE/correlation/missingness
-│       │   └── set_a.py                        # compute Steps/Sleep/RHR
+│       │   ├── evaluation.py                       # MAE/RMSE/correlation/missingness
+│       │   └── set_a.py                            # compute Steps/Sleep/RHR
 │       ├── analysis/
 │       │   ├── __init__.py
-│       │   └── plots.py                        # generates reports/figures/*.png
-│       ├── models/                             # lightweight "data shapes" (dataclasses/pydantic)
+│       │   └── plots.py                            # generates reports/figures/*.png
+│       ├── models/                                 # lightweight "data shapes" (dataclasses/pydantic)
 │       │   ├── __init__.py
 │       │   └── canonical.py
+│       ├── models/
 │       ├── orchestration/
 │       │   └── temporal/
-│       │       ├── activities/                 # shared library of reusable activities
-│       │       │   ├── __init__.py
-│       │       │   ├── compute_metrics.py
-│       │       │   ├── db_migrate.py
-│       │       │   ├── export_figures.py
-│       │       │   ├── ingest_apple.py
-│       │       │   └── ingest_google.py
-│       │       ├── modules/                    # workflow modules (each owns workflows + helpers)
+│       │       ├── activities/                     # shared library of reusable activities
+│       │       │   ├── config/
+│       │       │   │   └── load_config.py
+│       │       │   ├── db/
+│       │       │   │   ├── docker_compose_up.py
+│       │       │   │   └── verify_postgres_up.py
+│       │       │   ├── genesis_heartbeat.py
+│       │       │   └── secrets/
+│       │       │       └── load_secrets.py
+│       │       ├── common/
+│       │       │   └── types.py
+│       │       ├── modules/                        # workflow modules (each owns workflows + helpers)
 │       │       │   ├── analytics/
 │       │       │   │   ├── __init__.py
 │       │       │   │   ├── helpers.py
-│       │       │   │   └── workflows.py        # ComputeSetA, GenerateReport, etc.
+│       │       │   │   └── workflows.py            # ComputeSetA, GenerateReport, etc.
 │       │       │   ├── bootstrap/
-│       │       │   │   ├── __init__.py
-│       │       │   │   ├── helpers.py          # small module-specific utilities
-│       │       │   │   └── workflows.py        # InitializeOpenVitals, etc.
+│       │       │   │   ├── genesis_helper.py
+│       │       │   │   └── workflows.py
 │       │       │   └── ingestion/
 │       │       │       ├── __init__.py
 │       │       │       ├── helpers.py
-│       │       │       └── workflows.py        # IngestExportsWorkflow, IncrementalIngest later
-│       │       ├── __init__.py
-│       │       └── worker.py                   # starts worker, registers workflows/activities
+│       │       │       └── workflows.py            # IngestExportsWorkflow, IncrementalIngest later
+│       │       └── worker.py
 │       ├── __init__.py
-│       ├── cli.py                              # Typer CLI entrypoint (Phase 0)
-│       ├── config.py                           # loads .env + config defaults
-│       ├── db.py                               # DB engine/session helpers
-│       └── logging.py                          # structured logging helpers
+│       ├── cli.py                                  # Typer CLI entrypoint (Phase 0)
+│       ├── config.py                               # loads .env + config defaults
+│       ├── db.py                                   # DB engine/session helpers
+│       └── logging.py                              # structured logging helpers
 ├── templates/
-│   ├── .config.template                        # non-secret configuration (copy to repo root or config path)
-│   └── .env.template                           # secrets / env vars (copy to .env, never commit)
+│   ├── .config.template                            # non-secret configuration (copy to repo root or config path)
+│   └── .env.template                               # secrets / env vars (copy to .env, never commit)
 ├── tests/
-│   ├── fixtures/                               # tiny synthetic exports (sanitized) for tests
+│   ├── fixtures/                                   # tiny synthetic exports (sanitized) for tests
 │   ├── __init__.py
 │   ├── test_apple_health_parser.py
 │   ├── test_google_fit_parser.py
@@ -135,14 +145,12 @@ openvitals/
 ├── .gitignore
 ├── LICENSE
 ├── Makefile
-├── pyproject.toml                              # optional later (keep empty/unused in Phase 0 if desired)
+├── pyproject.toml                                  # optional later (keep empty/unused in Phase 0 if desired)
 ├── README.md
-├── requirements-dev.txt
 └── requirements.txt
 
 
 Notes
-- Phase 0 runs without Django; CLI + notebooks generate figures for the class.
-- Phase 1 adds services/backend (Django API + frontend) and services/temporal-workers; both read Postgres and trigger Temporal.
-- The orchestration/temporal package keeps Temporal code isolated from core parsing/analytics logic.
+- Phase 0 runs without Django; Temporal (bootstrap + Genesis) deploys OpenVitals Postgres; worker runs workflows/activities.
 - data/ is always local-only (raw exports must never be committed).
+- Python packages use __init__.py (not shown above). Worker image built from repo root requirements.txt.

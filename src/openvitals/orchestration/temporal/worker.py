@@ -11,6 +11,7 @@ import logging
 import os
 import signal
 import sys
+from concurrent.futures import ThreadPoolExecutor
 
 from pathlib import Path
 
@@ -52,14 +53,26 @@ async def run_worker() -> None:
     )
     logger.info("Successfully connected to Temporal")
 
-    from openvitals.orchestration.temporal.activities import genesis_heartbeat
+    from openvitals.orchestration.temporal.activities import (
+        genesis_heartbeat,
+        load_config,
+        load_secrets,
+    )
+    from openvitals.orchestration.temporal.activities.db import docker_compose_up, verify_postgres_up
     from openvitals.orchestration.temporal.modules.bootstrap.workflows import GenesisWorkflow
 
     async with Worker(
         client,
         task_queue=TASK_QUEUE,
         workflows=[GenesisWorkflow],
-        activities=[genesis_heartbeat],
+        activities=[
+            genesis_heartbeat,
+            load_config,
+            load_secrets,
+            docker_compose_up,
+            verify_postgres_up,
+        ],
+        activity_executor=ThreadPoolExecutor(max_workers=4),
     ):
         logger.info("Worker started successfully (task_queue=%s)", TASK_QUEUE)
         logger.info("Waiting for work... (Ctrl+C to stop)")

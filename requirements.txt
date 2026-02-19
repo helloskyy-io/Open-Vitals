@@ -7,3 +7,14 @@ temporalio>=1.8.0
 # Config: read/write YAML (bootstrap, scripts)
 ruamel.yaml>=0.18.0   # preserves comments when editing
 pyyaml>=6.0           # safe_load for reading
+
+# Postgres (Genesis, migrations, analytics)
+psycopg[binary]>=3.1.0
+sqlalchemy>=2.0.0
+
+# Phase 0 app stack (analytics, adapters, CLI, plots)
+pandas>=2.0.0
+numpy>=1.24.0
+typer>=0.9.0
+matplotlib>=3.7.0
+plotly>=5.18.0
