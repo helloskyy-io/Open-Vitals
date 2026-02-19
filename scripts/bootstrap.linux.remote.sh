@@ -7,14 +7,15 @@
 # Safe to run via curl or from disk; idempotent.
 #
 # Usage (from a fresh VM, as root):
-#   curl -fsSL https://raw.githubusercontent.com/helloskyy-io/Open-Vitals/main/scripts/bootstrap.linux.remote.sh | sudo bash
-#
-# Or download and run:
+#   curl -fsSL ... | sudo bash
 #   sudo ./scripts/bootstrap.linux.remote.sh
+#   sudo ./scripts/bootstrap.linux.remote.sh --env prod --yes
+#
+# Flags are passed through to bootstrap.linux.sh (e.g. --env prod, -y).
 
 set -euo pipefail
 
-INSTALL_DIR="${INSTALL_DIR:-/opt/open-vitals}"
+INSTALL_DIR="/opt/open-vitals"
 REPO_URL="${REPO_URL:-https://github.com/helloskyy-io/Open-Vitals.git}"
 BRANCH="${BRANCH:-main}"
 
@@ -88,7 +89,7 @@ run_bootstrap() {
   fi
   log_info "Running bootstrap: $bootstrap"
   log_info "══════════════════════════════════════════════════════════════"
-  "$bootstrap"
+  "$bootstrap" "$@"
 }
 
 main() {
@@ -103,7 +104,7 @@ main() {
   echo ""
   clone_or_skip
   echo ""
-  run_bootstrap
+  run_bootstrap "$@"
 }
 
 main "$@"

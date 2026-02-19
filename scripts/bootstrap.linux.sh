@@ -17,6 +17,16 @@
 #
 # Usage (from repo root):
 #   sudo ./scripts/bootstrap.linux.sh
+#   sudo ./scripts/bootstrap.linux.sh --env prod --yes
+#   sudo ./scripts/bootstrap.linux.sh -e prod -y
+#
+# Flags:
+#   --env, -e dev|test|prod   Deployment environment (persisted to config.yaml). Overrides config and env var.
+#   --yes, -y                 Non-interactive: skip the config-review pause and continue with defaults.
+#
+# Env vars (optional; flags take precedence):
+#   OPENVITALS_DEPLOYMENT_ENV  Same as --env (dev|test|prod).
+#   OPENVITALS_YES             Non-empty skips the pause (same as -y).
 
 set -euo pipefail
 
@@ -130,18 +140,22 @@ verify_repo_files() {
 }
 
 # --- Read deployment env from config.yaml (dev | test | prod); set OVERRIDE_FILE ---
-
+# Optional first argument overrides config (e.g. from --env flag when persistence failed).
 read_deployment_env() {
-  log_info "Reading deployment environment from config.yaml..."
+  local override_env="${1:-}"
+  local env_value=""
 
-  if [[ ! -f "$CONFIG_FILE" ]]; then
-    log_error "config.yaml not found at $CONFIG_FILE (run script once to create from template)"
-    return 1
-  fi
-
-  local env_value
-  if command -v python3 &>/dev/null; then
-    env_value=$(python3 -c "
+  if [[ -n "$override_env" ]]; then
+    env_value="$override_env"
+    log_info "Using deployment environment from flag/env: $env_value"
+  else
+    log_info "Reading deployment environment from config.yaml..."
+    if [[ ! -f "$CONFIG_FILE" ]]; then
+      log_error "config.yaml not found at $CONFIG_FILE (run script once to create from template)"
+      return 1
+    fi
+    if command -v python3 &>/dev/null; then
+      env_value=$(python3 -c "
 import sys
 try:
     import yaml
@@ -154,9 +168,10 @@ try:
 except Exception:
     print('dev')
 " 2>/dev/null) || env_value="dev"
-  else
-    env_value=$(grep -E 'deployment_env' "$CONFIG_FILE" 2>/dev/null | head -1 | sed -n 's/.*deployment_env:\s*\(dev\|test\|prod\).*/\1/p') || true
-    env_value="${env_value:-dev}"
+    else
+      env_value=$(grep -E 'deployment_env' "$CONFIG_FILE" 2>/dev/null | head -1 | sed -n 's/.*deployment_env:\s*\(dev\|test\|prod\).*/\1/p') || true
+      env_value="${env_value:-dev}"
+    fi
   fi
 
   export ENV="${env_value}"
@@ -462,9 +477,66 @@ print_success() {
   log_info "══════════════════════════════════════════════════════════════"
 }
 
+# --- Apply deployment env from flag/env to config.yaml (so read_deployment_env sees it) ---
+apply_bootstrap_env_to_config() {
+  local env_value="$1"
+  if [[ -z "$env_value" ]]; then
+    return 0
+  fi
+  if [[ ! -f "$CONFIG_FILE" ]]; then
+    log_error "config.yaml not found; cannot set deployment_env"
+    return 1
+  fi
+  local helper="$REPO_ROOT/scripts/lib/config_edit.py"
+  if [[ ! -f "$helper" ]]; then
+    log_error "Config helper not found: $helper"
+    return 1
+  fi
+  if ! python3 "$helper" --config "$CONFIG_FILE" --set temporal.deployment_env "$env_value" 2>/dev/null; then
+    if python3 -c "import ruamel.yaml" 2>/dev/null; then
+      log_error "Failed to write temporal.deployment_env to config.yaml"
+      return 1
+    else
+      log_warn "ruamel.yaml not installed; deployment_env not persisted (used for this run only)"
+    fi
+  else
+    log_info "Set temporal.deployment_env=$env_value in config.yaml"
+  fi
+  return 0
+}
+
 # --- Main ---
 
 main() {
+  # Parse flags: --env / -e dev|test|prod, --yes / -y (precedence: flag > env var)
+  local BOOTSTRAP_ENV=""
+  local BOOTSTRAP_YES=""
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --env|-e)
+        if [[ $# -lt 2 ]]; then
+          log_error "Missing value for $1 (use dev, test, or prod)"
+          exit 1
+        fi
+        BOOTSTRAP_ENV="$2"
+        shift 2
+        ;;
+      --yes|-y)
+        BOOTSTRAP_YES=1
+        shift
+        ;;
+      *)
+        shift
+        ;;
+    esac
+  done
+  [[ -n "${BOOTSTRAP_ENV:-}" ]] || BOOTSTRAP_ENV="${OPENVITALS_DEPLOYMENT_ENV:-}"
+  [[ -n "${BOOTSTRAP_YES:-}" ]] || [[ -z "${OPENVITALS_YES:-}" ]] || BOOTSTRAP_YES=1
+  if [[ -n "$BOOTSTRAP_ENV" ]] && [[ "$BOOTSTRAP_ENV" != "dev" ]] && [[ "$BOOTSTRAP_ENV" != "test" ]] && [[ "$BOOTSTRAP_ENV" != "prod" ]]; then
+    log_error "Invalid deployment env: $BOOTSTRAP_ENV (use dev, test, or prod)"
+    exit 1
+  fi
+
   log_info "OpenVitals — Bootstrap / Deploy Temporal (idempotent)"
   echo ""
 
@@ -481,11 +553,16 @@ main() {
   create_config_files || exit 1
   echo ""
 
-  if [[ "$CREATED_CONFIG_FILES" == "true" ]]; then
+  if [[ -n "$BOOTSTRAP_ENV" ]]; then
+    apply_bootstrap_env_to_config "$BOOTSTRAP_ENV" || exit 1
+    echo ""
+  fi
+
+  if [[ "$CREATED_CONFIG_FILES" == "true" ]] && [[ "${BOOTSTRAP_YES:-0}" != "1" ]]; then
     prompt_edit_then_continue
   fi
 
-  read_deployment_env || exit 1
+  read_deployment_env "${BOOTSTRAP_ENV:-}" || exit 1
   echo ""
 
   update_config_project_root

@@ -68,7 +68,25 @@ For detailed information about the Phase 0 research project, see [`docs/developm
 
 Deployment starts with the **Temporal stack** (database, server, UI) and the **temporal-worker**. Bootstrap is idempotent and prepares the environment so that the Genesis workflow (via `genesis.sh`) can deploy the OpenVitals app DB and run migrations next.
 
-**Bootstrap scripts:** **`bootstrap.linux.remote.sh`** — production/VM install via curl (creates `/opt/open-vitals`, clones repo, runs bootstrap). **`bootstrap.linux.sh`** — run from repo root (dev or after remote clone). Windows and macOS bootstrap scripts are planned for a future release.
+**Bootstrap scripts:** **`bootstrap.linux.remote.sh`** — production/VM install via curl (creates `/opt/open-vitals`, clones repo, runs bootstrap). **`bootstrap.linux.sh`** — run from repo root (dev or after remote clone). Both scripts accept the same **flags**; the remote script passes them through to the main bootstrap. Windows and macOS bootstrap scripts are planned for a future release.
+
+#### Bootstrap flags (both entry points)
+
+| Flag | Short | Description |
+|------|--------|-------------|
+| `--env dev\|test\|prod` | `-e` | Deployment environment. Written to `config.yaml` (`temporal.deployment_env`) so the correct Temporal namespace and compose override are used. Default is `dev`. |
+| `--yes` | `-y` | Non-interactive: skip the config-review pause and continue with defaults. Use for CI or when config is already correct. |
+
+**Optional env vars** (flags take precedence): `OPENVITALS_DEPLOYMENT_ENV` (same as `--env`), `OPENVITALS_YES` (non-empty = skip pause).
+
+**Examples:**
+
+- Dev, interactive (pause to review config):  
+  `sudo ./scripts/bootstrap.linux.sh`
+- Prod, non-interactive (no pause; env persisted to config):  
+  `sudo ./scripts/bootstrap.linux.sh --env prod -y`
+- Remote VM, prod, non-interactive (flags passed through):  
+  `sudo ./scripts/bootstrap.linux.remote.sh --env prod -y`
 
 ---
 
@@ -84,12 +102,13 @@ curl -fsSL https://raw.githubusercontent.com/helloskyy-io/Open-Vitals/main/scrip
 
 **What it does (idempotent):**
 
-1. Creates `/opt/open-vitals` (or `INSTALL_DIR` if set).
+1. Creates **`/opt/open-vitals`**.
 2. Installs **git** if missing (Ubuntu/Debian, apt).
 3. **Clones** the repo into `/opt/open-vitals` if not already there.
-4. Runs **`/opt/open-vitals/scripts/bootstrap.linux.sh`** (Docker, config, Temporal, temporal-worker).
+4. Runs **`scripts/bootstrap.linux.sh`** from the clone, passing through any flags you provide (e.g. `--env prod -y` for a non-interactive prod deploy).
 
-Safe to run multiple times; if the repo is already present, it skips clone and runs bootstrap again.
+Safe to run multiple times; if the repo is already present, it skips clone and runs bootstrap again. For a production deploy without the config-review pause, run with flags:  
+`sudo ./scripts/bootstrap.linux.remote.sh --env prod -y`
 
 ---
 
@@ -104,6 +123,9 @@ git clone https://github.com/helloskyy-io/Open-Vitals.git open-vitals
 cd open-vitals
 sudo ./scripts/bootstrap.linux.sh
 ```
+
+To set deployment environment and skip the config-review pause (e.g. for automation), add flags:  
+`sudo ./scripts/bootstrap.linux.sh --env prod -y`
 
 **Clone URLs:**
 
@@ -125,9 +147,9 @@ git clone https://github.com/helloskyy-io/Open-Vitals.git open-vitals && cd open
 3. **Creates config files** if they don't exist:
    - `config.yaml` from `templates/.config.template` (sets `openvitals.project_root` to the actual repo path when possible).
    - `.env` from `templates/.env.template` and **auto-generates** both `TEMPORAL_POSTGRES_PASSWORD` and `OPENVITALS_DB_PASSWORD` when creating from template.
-4. **Optional pause (only when config was just created):** the script stops and asks you to review. You can edit `.env` or `config.yaml` if you want to change the Temporal password/port or deployment env before starting, or press **y** to accept defaults and continue.
-5. **Reads deployment env** from `config.yaml` (`temporal.deployment_env`: dev | test | prod) and uses the matching Docker Compose override (see `docs/standards/docker_compose_layout.md`).
-6. **Starts Temporal** (temporal-db, temporal-server, temporal-ui) and ensures the namespace; then starts **temporal-worker** and runs health checks.
+4. **Optional pause (only when config was just created):** the script stops and asks you to review—unless you passed **`-y`** or set `OPENVITALS_YES`. You can edit `.env` or `config.yaml` (e.g. Temporal password/port, deployment env), or press **y** to accept defaults and continue.
+5. **Reads deployment env** from `config.yaml` (`temporal.deployment_env`: dev | test | prod) and uses the matching Docker Compose override (see `docs/standards/docker_compose_layout.md`). If you passed **`--env`** (or set `OPENVITALS_DEPLOYMENT_ENV`), that value is written to `config.yaml` before this step. This also determines the **Temporal namespace** (e.g. `openvitals-dev`, `openvitals-prod`) and task queue—that’s how dev and production are separated in one cluster. Default is `dev`; set to `prod` (or `test`) when deploying to that environment.
+6. **Starts Temporal** (temporal-db, temporal-server, temporal-ui), creates that namespace if needed, then starts **temporal-worker** and runs health checks.
 7. **Prints** the Temporal UI URL and the next step (`scripts/genesis.sh`).
 
 Safe to run multiple times; existing `config.yaml` and `.env` are left unchanged.
@@ -143,7 +165,18 @@ Safe to run multiple times; existing `config.yaml` and `.env` are left unchanged
 - **Verify** that the Temporal UI is up and accessible in your browser before running the Genesis workflow.
 - Containers: temporal-db, temporal-server, temporal-ui, **temporal-worker**.
 - When ready for the next step (Genesis workflow to deploy OpenVitals DB and run migrations), run: **`sudo ./scripts/genesis.sh`**.
-- For how dev vs production env setup is planned and what manual steps sit between bootstrap and Genesis, see [Temporal env and deployment plan](docs/development/Temporal_env_and_deployment_plan.md).
+- For Temporal deployment, architecture, and workflow/activity standards, see [Temporal standards](docs/standards/temporal_standards.md).
+
+### Resetting the environment (dev/test)
+
+To remove containers, database volumes, and config for a clean start (e.g. before re-running bootstrap), use **`scripts/reset.env.sh`**. The script asks for confirmation before each step; type **YES** to perform that step, or **NO** / **Enter** to skip.
+
+- Step 1: Stop and remove all containers (temporal-*, openvitals-db).
+- Step 2: Delete Temporal database volume.
+- Step 3: Delete OpenVitals database volume.
+- Step 4: Delete `.env` and `config.yaml` in the repo root.
+
+Requires root: **`sudo ./scripts/reset.env.sh`**. At the end it prints a summary of what was done.
 
 ---
 

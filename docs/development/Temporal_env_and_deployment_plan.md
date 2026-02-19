@@ -1,5 +1,7 @@
 # Temporal env setup and deployment plan
 
+> **Status:** Most of this plan is implemented. The **authoritative standard** for Temporal (deployment, architecture, layout, patterns) is **[docs/standards/temporal_standards.md](../standards/temporal_standards.md)**; deployment-only summary: [temporal_deployment.md](../standards/temporal_deployment.md). Phase 0 and README describe the current flow. This doc remains for historical context and may be removed once Genesis is fully implemented.
+
 **Purpose:** Plan how Temporal is used to set up and configure the OpenVitals environment for **dev** (local) vs **production** (VM), and what **manual steps** sit between running the bootstrap script and running the Temporal-driven workflow (Genesis).
 
 **Scope:** Phase 0 stack per [Tech_Stack.md](../architecture/Tech_Stack.md): Postgres (OpenVitals DB + Temporal DB), Python/pip (pandas, numpy, sqlalchemy, psycopg, typer, matplotlib/plotly), Jupyter (dev-only), Temporal (server + worker).
