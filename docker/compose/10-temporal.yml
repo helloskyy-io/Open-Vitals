@@ -1,0 +1,57 @@
+# OpenVitals — Temporal infrastructure (db, server, UI)
+# Use with 00-networks.yml and an env override (dev/test/prod).
+# .env supplies secrets (e.g. TEMPORAL_POSTGRES_PASSWORD). See docs/standards/docker_compose_layout.md.
+
+services:
+  temporal-db:
+    image: postgres:15
+    container_name: temporal-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-temporal}
+      POSTGRES_PASSWORD: ${TEMPORAL_POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-temporal}
+    volumes:
+      - temporal_db_data:/var/lib/postgresql/data
+    networks:
+      - openvitals
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-temporal} -d ${POSTGRES_DB:-temporal}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  temporal-server:
+    image: temporalio/auto-setup:latest
+    container_name: temporal-server
+    depends_on:
+      temporal-db:
+        condition: service_healthy
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER:-temporal}
+      - POSTGRES_PWD=${TEMPORAL_POSTGRES_PASSWORD:-changeme}
+      - POSTGRES_SEEDS=temporal-db
+      - SKIP_DEFAULT_NAMESPACE_CREATION=false
+      - FRONTEND_ENABLE_CSRF_PROTECTION=false
+    networks:
+      - openvitals
+    restart: unless-stopped
+
+  temporal-ui:
+    image: temporalio/ui:latest
+    container_name: temporal-ui
+    depends_on:
+      - temporal-server
+    environment:
+      - TEMPORAL_ADDRESS=temporal-server:${TEMPORAL_PORT:-7233}
+    ports:
+      - "8234:8080"
+    networks:
+      - openvitals
+    restart: unless-stopped
+
+volumes:
+  temporal_db_data:
+    driver: local

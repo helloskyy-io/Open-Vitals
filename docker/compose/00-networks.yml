@@ -1,0 +1,8 @@
+# OpenVitals — shared Docker networks
+# Used with 10-temporal.yml and env-specific override (e.g. dev.override.yml).
+# See docs/standards/docker_compose_layout.md.
+
+networks:
+  openvitals:
+    name: openvitals
+    driver: bridge

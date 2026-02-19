@@ -1,0 +1,2 @@
+-- OpenVitals initial migration (placeholder)
+-- Replace with canonical schema v0 / init DDL when ready.

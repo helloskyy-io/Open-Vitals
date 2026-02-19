@@ -1,0 +1,29 @@
+# OpenVitals — application Postgres (health data)
+# Use with 00-networks.yml and env override. Password from .env (OPENVITALS_DB_PASSWORD).
+# Genesis workflow (or manual step) creates DB/user if needed; this service just runs the Postgres container.
+# Host port 5433 so app on host can use localhost:5433 (config.yaml openvitals.database.port).
+
+services:
+  openvitals-db:
+    image: postgres:15
+    container_name: openvitals-db
+    environment:
+      POSTGRES_USER: ${OPENVITALS_DB_USER:-openvitals}
+      POSTGRES_PASSWORD: ${OPENVITALS_DB_PASSWORD:-changeme}
+      POSTGRES_DB: ${OPENVITALS_DB_NAME:-openvitals}
+    volumes:
+      - openvitals_db_data:/var/lib/postgresql/data
+    networks:
+      - openvitals
+    ports:
+      - "${OPENVITALS_DB_PORT:-5433}:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${OPENVITALS_DB_USER:-openvitals} -d ${OPENVITALS_DB_NAME:-openvitals}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  openvitals_db_data:
+    driver: local

@@ -8,12 +8,20 @@ openvitals/
 │   │   └── google_fit/
 │   └── README.md                               # rules for local handling
 ├── docker/
+│   ├── compose/
+│   │   ├── 00-networks.yml
+│   │   ├── 10-temporal.yml
+│   │   ├── dev.override.yml
+│   │   ├── prod.override.yml
+│   │   └── test.override.yml
 │   ├── .dockerignore
-│   ├── docker-compose.yml
 │   └── Dockerfile
 ├── docs/
+│   ├── assets/
+│   │   └── README.md                           # logo (e.g. hello_skyy.jpg) for README
 │   ├── development/
 │   │   ├── Phase0_research_project.md          # class project proposal + Phase 0 checklist
+│   │   ├── Temporal_env_and_deployment_plan.md # Temporal dev vs prod env; manual steps bootstrap → Genesis
 │   │   └── phase0_file_structure_alignment.md
 │   ├── metrics/
 │   │   └── set_a_definitions.md
@@ -26,6 +34,9 @@ openvitals/
 │   ├── phase0_execution_checklist.md
 │   ├── PRIVACY.md
 │   ├── ROADMAP.md
+│   ├── standards/
+│   │   ├── docker_compose_layout.md            # numbered base files + env overrides; deployment_env in config
+│   │   └── env_and_config.md                   # .env = secrets only; config.yaml = all other settings
 │   └── TECH_STACK.md
 ├── notebooks/                                  # dev-only (not required for running pipeline)
 │   ├── 00_environment_check.ipynb
@@ -42,7 +53,8 @@ openvitals/
 │   ├── presentation_outline.md
 │   └── temporal_demo.md
 ├── scripts/
-│   ├── bootstrap.sh                            # Day-0 install + compose up
+│   ├── bootstrap.linux.remote.sh               # Prod/VM: curl → /opt/open-vitals, clone, run bootstrap.linux.sh
+│   ├── bootstrap.linux.sh                      # Day-0 bootstrap (Linux); future: bootstrap.windows.sh, bootstrap.mac.sh
 │   ├── doctor.sh                               # health checks
 │   ├── export_figures.sh                       # run plots generation end-to-end
 │   ├── migrate.sh                              # apply sql migrations to openvitals DB

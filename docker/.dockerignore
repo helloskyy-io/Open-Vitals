@@ -1,0 +1,4 @@
+# Ignore local env and config (use templates at build/runtime)
+.env
+config.yaml
+*.log

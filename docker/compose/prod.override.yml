@@ -1,0 +1,4 @@
+# Docker Compose override for PROD environment
+# Selected when config.yaml has temporal.deployment_env: prod.
+
+services: {}

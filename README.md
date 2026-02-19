@@ -1,8 +1,23 @@
-<img src="hs_logo.jpg" alt="HelloSkyy Logo" width="100%"/>
+![Logo](docs/assets/hs_logo.jpg)
 
 # OpenVitals
 
-**Own your health data. Understand your body. On your terms.**
+This repository is the core platform for **OpenVitals**: an open, vendor‑neutral system for ingesting, storing, and analyzing personal wearable health data outside of proprietary ecosystems.
+
+---
+
+## OpenVitals ecosystem
+
+OpenVitals is a local-first platform that lets you own and analyze your wearable health data. It takes exports from vendor ecosystems (e.g. Google Fit, Apple Health), normalizes them into a single schema, and reproduces core health metrics using transparent, reproducible methods. Built for research and self‑hosting, it keeps your data on your machine and uses Temporal for orchestration so that deployment and pipelines can be automated incrementally.
+
+### Purpose
+
+OpenVitals empowers individuals and researchers to:
+
+- **Own and store wearable health data** in a vendor-agnostic, local database  
+- **Reproduce core health metrics** (steps, sleep, resting heart rate) with open methods  
+- **Compare reproduced metrics to vendor-reported values** for transparency and research  
+- **Run pipelines and deployment via Temporal** so workflows are auditable and retry-safe  
 
 ---
 
@@ -22,7 +37,7 @@ OpenVitals exists to reverse that model.
 
 **Not my storage, not my data.**
 
-The goal is to give individuals full ownership over their health data, make analytics reproducible and transparent, and remove unnecessary vendor lock‑in — while still enabling advanced insights and AI‑driven interpretation on the user’s terms.
+The goal is to give individuals full ownership over their health data, make analytics reproducible and transparent, and remove unnecessary vendor lock‑in — while still enabling advanced insights and AI‑driven interpretation on the user's terms.
 
 ---
 
@@ -49,20 +64,86 @@ For detailed information about the Phase 0 research project, see [`docs/developm
 
 ---
 
-## Quickstart
+## Deployment
 
-🚧 **Coming soon**
+Deployment starts with the **Temporal stack** (database, server, UI) and the **temporal-worker**. Bootstrap is idempotent and prepares the environment so that the Genesis workflow (via `genesis.sh`) can deploy the OpenVitals app DB and run migrations next.
 
-OpenVitals will provide a simple bootstrap process that deploys a fully local, self‑hosted environment using automated workflows.
+**Bootstrap scripts:** **`bootstrap.linux.remote.sh`** — production/VM install via curl (creates `/opt/open-vitals`, clones repo, runs bootstrap). **`bootstrap.linux.sh`** — run from repo root (dev or after remote clone). Windows and macOS bootstrap scripts are planned for a future release.
 
-The planned quickstart will:
+---
 
-* Provision an empty VM or local environment
-* Deploy required services automatically
-* Ingest exported wearable data
-* Launch a local analytics interface
+### Production / VM install (remote)
 
-No cloud account required. Your data stays on your machine.
+Use this on a **fresh VM or server**. The script creates **`/opt/open-vitals`**, clones the repo there, then runs the main bootstrap from the clone. **Requires root (sudo).**
+
+**One-liner (curl):**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/helloskyy-io/Open-Vitals/main/scripts/bootstrap.linux.remote.sh | sudo bash
+```
+
+**What it does (idempotent):**
+
+1. Creates `/opt/open-vitals` (or `INSTALL_DIR` if set).
+2. Installs **git** if missing (Ubuntu/Debian, apt).
+3. **Clones** the repo into `/opt/open-vitals` if not already there.
+4. Runs **`/opt/open-vitals/scripts/bootstrap.linux.sh`** (Docker, config, Temporal, temporal-worker).
+
+Safe to run multiple times; if the repo is already present, it skips clone and runs bootstrap again.
+
+---
+
+### Dev install (local)
+
+Use this when you **already cloned the repo** (e.g. on your laptop or in a custom path). Clone wherever you want, then run the bootstrap from the repo root. **Requires root (sudo).**
+
+**Clone, then run bootstrap:**
+
+```bash
+git clone https://github.com/helloskyy-io/Open-Vitals.git open-vitals
+cd open-vitals
+sudo ./scripts/bootstrap.linux.sh
+```
+
+**Clone URLs:**
+
+- **HTTPS:** `https://github.com/helloskyy-io/Open-Vitals`
+- **SSH:** `git@github.com:helloskyy-io/Open-Vitals.git`
+
+**One-liner (clone then bootstrap):**
+
+```bash
+git clone https://github.com/helloskyy-io/Open-Vitals.git open-vitals && cd open-vitals && sudo ./scripts/bootstrap.linux.sh
+```
+
+### What `bootstrap.linux.sh` does (idempotent)
+
+**`bootstrap.linux.sh`** (run from repo root, or by the remote script from `/opt/open-vitals`):
+
+1. **Requires sudo** — Must be run as root.
+2. **Ensures Docker** — Installs Docker and Docker Compose (v2) on Linux (apt) if missing.
+3. **Creates config files** if they don't exist:
+   - `config.yaml` from `templates/.config.template` (sets `openvitals.project_root` to the actual repo path when possible).
+   - `.env` from `templates/.env.template` and **auto-generates** both `TEMPORAL_POSTGRES_PASSWORD` and `OPENVITALS_DB_PASSWORD` when creating from template.
+4. **Optional pause (only when config was just created):** the script stops and asks you to review. You can edit `.env` or `config.yaml` if you want to change the Temporal password/port or deployment env before starting, or press **y** to accept defaults and continue.
+5. **Reads deployment env** from `config.yaml` (`temporal.deployment_env`: dev | test | prod) and uses the matching Docker Compose override (see `docs/standards/docker_compose_layout.md`).
+6. **Starts Temporal** (temporal-db, temporal-server, temporal-ui) and ensures the namespace; then starts **temporal-worker** and runs health checks.
+7. **Prints** the Temporal UI URL and the next step (`scripts/genesis.sh`).
+
+Safe to run multiple times; existing `config.yaml` and `.env` are left unchanged.
+
+### Manual steps (when and what to edit)
+
+- **During first run:** If the script just created config, it pauses. You can edit `.env` (e.g. to change Temporal or OpenVitals DB passwords) and/or `config.yaml` (e.g. `temporal.deployment_env`, ports), or press **y** to accept defaults. Both passwords are already generated when `.env` is created from the template.
+- **Between bootstrap and Genesis:** Before running `scripts/genesis.sh`, you can change `openvitals.project_root` or other settings in `config.yaml`, or secrets in `.env`, if needed. The real place for manual configuration is this gap; the in-script pause is optional.
+
+### After deployment
+
+- Open **Temporal UI** at the printed URL (e.g. `http://127.0.0.1:8234`).
+- **Verify** that the Temporal UI is up and accessible in your browser before running the Genesis workflow.
+- Containers: temporal-db, temporal-server, temporal-ui, **temporal-worker**.
+- When ready for the next step (Genesis workflow to deploy OpenVitals DB and run migrations), run: **`sudo ./scripts/genesis.sh`**.
+- For how dev vs production env setup is planned and what manual steps sit between bootstrap and Genesis, see [Temporal env and deployment plan](docs/development/Temporal_env_and_deployment_plan.md).
 
 ---
 

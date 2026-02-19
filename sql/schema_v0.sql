@@ -1,0 +1,2 @@
+-- Canonical schema v0 (placeholder)
+-- See docs/canonical_schema_v0.md and sql/migrations/ when implementing.

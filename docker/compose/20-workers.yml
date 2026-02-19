@@ -1,0 +1,31 @@
+# OpenVitals — Temporal worker(s)
+# Single worker "temporal-worker" for Genesis and future ingestion/analytics.
+# REPO_ROOT and ENV must be set when running compose (e.g. by bootstrap script).
+
+services:
+  temporal-worker:
+    build:
+      context: ../..
+      dockerfile: docker/images/workers/temporal/Dockerfile
+    container_name: temporal-worker
+    depends_on:
+      temporal-server:
+        condition: service_started
+    environment:
+      - TEMPORAL_HOST=temporal-server
+      - TEMPORAL_PORT=${TEMPORAL_PORT:-7233}
+      - TEMPORAL_NAMESPACE=openvitals-${ENV}
+      - TASK_QUEUE=bootstrap-${ENV}
+    networks:
+      - openvitals
+    volumes:
+      # Mount config and .env so activities can read them (path from REPO_ROOT)
+      - ${REPO_ROOT:-/opt/open-vitals}/config.yaml:/opt/open-vitals/config.yaml:ro
+      - ${REPO_ROOT:-/opt/open-vitals}/.env:/opt/open-vitals/.env:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3

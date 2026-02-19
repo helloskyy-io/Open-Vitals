@@ -1,0 +1,5 @@
+# Docker Compose override for DEV environment
+# Selected when config.yaml has temporal.deployment_env: dev.
+# Add dev-specific overrides below if needed (ports, env, etc.).
+
+services: {}
