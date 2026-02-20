@@ -59,6 +59,7 @@ async def run_worker() -> None:
         load_secrets,
     )
     from openvitals.orchestration.temporal.activities.db import docker_compose_up, verify_postgres_up
+    from openvitals.orchestration.temporal.activities.dev import verify_jupyter_up
     from openvitals.orchestration.temporal.modules.bootstrap.workflows import GenesisWorkflow
 
     async with Worker(
@@ -71,6 +72,7 @@ async def run_worker() -> None:
             load_secrets,
             docker_compose_up,
             verify_postgres_up,
+            verify_jupyter_up,
         ],
         activity_executor=ThreadPoolExecutor(max_workers=4),
     ):

@@ -1,13 +1,15 @@
 # config.yaml — copy to repo root as config.yaml (never commit)
 # Non-secret settings only. Secrets go in .env. See docs/standards/env_and_config.md.
 
-temporal:                                   # dev | test | prod. Drives Temporal namespace and compose override.
+temporal:                                       # dev | test | prod. Drives Temporal namespace and compose override.
   deployment_env: dev
 
 openvitals:
-  project_root: ""                          # set by bootstrap or set manually
-  database:                                 # Edit before Genesis or accept defaults.
-    host: localhost                         # for host-side apps; worker uses openvitals-db:5432
+  project_root: ""                              # set by bootstrap or set manually
+  database:                                     # Edit before Genesis or accept defaults.
+    host: localhost                             # for host-side apps; worker uses openvitals-db:5432
     port: 5433
     user: openvitals
     name: openvitals
+  jupyter:                                      # dev-only; port Jupyter listens on (host and container)
+    port: 8888

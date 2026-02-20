@@ -85,6 +85,8 @@ Deployment starts with the **Temporal stack** (database, server, UI) and the **t
 
 - Dev, interactive (pause to review config):  
   `sudo ./scripts/bootstrap.linux.sh`
+- Dev, non-interactive (no pause; env persisted to config):  
+  `sudo ./scripts/bootstrap.linux.sh --env dev -y`
 - Prod, non-interactive (no pause; env persisted to config):  
   `sudo ./scripts/bootstrap.linux.sh --env prod -y`
 - Remote VM, prod, non-interactive (flags passed through):  
@@ -167,6 +169,7 @@ Safe to run multiple times; existing `config.yaml` and `.env` are left unchanged
 - **Verify** that the Temporal UI is up and accessible in your browser before running the Genesis workflow.
 - Containers: temporal-db, temporal-server, temporal-ui, **temporal-worker**. The worker has **Docker socket access** so Genesis can run `docker compose` (e.g. bring up OpenVitals Postgres); treat it as a trusted orchestration component.
 - When ready for the next step (Genesis workflow to deploy OpenVitals DB and run migrations), run: **`sudo ./scripts/genesis.sh`**.
+- **Jupyter (dev only):** When `temporal.deployment_env` is `dev`, Genesis also starts Jupyter. Port comes from **`config.yaml`** → `openvitals.jupyter.port` (default **8888**). No token or password (dev-only, localhost only). After Genesis succeeds, open **http://127.0.0.1:8888** (or your configured port) — you should see Jupyter Lab with no login or token prompt. **If you get "connection refused":** Check that the container is running (`docker ps | grep jupyter`) and view logs (`docker logs jupyter`).
 - After changing workflow or activity code, rebuild the worker so it runs the new code: **`./scripts/rebuild-worker.sh`** (then run genesis again to test). After changing **`requirements.txt`**, run **`./scripts/rebuild-worker.sh`** (worker only) or **`./scripts/update-requirements.sh`** (take down all containers, re-run bootstrap to refresh venv and rebuild all containers; volumes and config preserved).
 - For Temporal deployment, architecture, and workflow/activity standards, see [Temporal standards](docs/standards/temporal_standards.md).
 

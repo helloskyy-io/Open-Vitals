@@ -263,6 +263,23 @@ except Exception:
 # Set to true when we create .env or config.yaml so main can prompt for manual steps before starting Temporal
 CREATED_CONFIG_FILES=false
 
+# Chown config and .env to the real user (who invoked sudo) so they can edit; no-op if not root or SUDO_UID unset
+chown_config_and_env_to_real_user() {
+  if [[ $EUID -ne 0 ]]; then
+    return 0
+  fi
+  if [[ -z "${SUDO_UID:-}" ]] || [[ -z "${SUDO_GID:-}" ]]; then
+    return 0
+  fi
+  for f in "$CONFIG_FILE" "$ENV_FILE"; do
+    if [[ -f "$f" ]]; then
+      if chown "$SUDO_UID:$SUDO_GID" "$f" 2>/dev/null; then
+        log_info "Set ownership of $(basename "$f") to user $SUDO_UID (so you can edit without root)"
+      fi
+    fi
+  done
+}
+
 create_config_files() {
   log_info "Ensuring config.yaml and .env exist..."
 
@@ -314,6 +331,9 @@ create_config_files() {
     log_warn "Review and update secrets in .env as needed"
     files_created=true
   fi
+
+  # Always fix ownership when running as root so user can edit config and .env (fixes existing root-owned files)
+  chown_config_and_env_to_real_user
 
   if [[ "$files_created" == "true" ]]; then
     CREATED_CONFIG_FILES=true
@@ -402,6 +422,9 @@ start_temporal_infra() {
   fi
 
   cd "$REPO_ROOT" || { log_error "Could not cd to $REPO_ROOT"; return 1; }
+  export REPO_ROOT
+  export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-$(basename "$REPO_ROOT")}"
+  # REPO_ROOT required so dev.override.yml parses (jupyter volume uses ${REPO_ROOT}); we are not starting jupyter here
 
   docker compose \
     --env-file "$ENV_FILE" \
@@ -497,6 +520,7 @@ start_temporal_worker() {
   cd "$REPO_ROOT" || { log_error "Could not cd to $REPO_ROOT"; return 1; }
   export REPO_ROOT
   export ENV
+  export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-$(basename "$REPO_ROOT")}"
 
   docker compose \
     --env-file "$ENV_FILE" \

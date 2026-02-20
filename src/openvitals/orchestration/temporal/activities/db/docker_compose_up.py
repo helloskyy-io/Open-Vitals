@@ -29,6 +29,7 @@ async def docker_compose_up(
     env_file: str,
     service_name: str,
     env_vars: dict[str, str] | None = None,
+    timeout_seconds: int | None = None,
 ) -> dict:
     """
     Run docker compose up -d for the given service.
@@ -40,10 +41,12 @@ async def docker_compose_up(
         service_name: Service to bring up (e.g. openvitals-db).
         env_vars: Optional env vars from config (e.g. OPENVITALS_DB_USER, OPENVITALS_DB_NAME, OPENVITALS_DB_PORT).
                   Merged with process env so compose sees them; non-secret settings belong in config, not .env.
+        timeout_seconds: Max seconds for the compose run (e.g. 360 when building jupyter image). Default 120.
 
     Returns:
         Activity result dict: status ok/failed, details.
     """
+    run_timeout = 120 if timeout_seconds is None else max(60, timeout_seconds)
     cwd = Path(compose_dir)
     if not cwd.is_dir():
         return _result("failed", f"Compose dir not found: {compose_dir}", error_code="COMPOSE_DIR_NOT_FOUND")
@@ -65,7 +68,7 @@ async def docker_compose_up(
         run_env.update(env_vars)
 
     try:
-        proc = await asyncio_to_subprocess_run(cmd, cwd=cwd, env=run_env, capture_output=True, text=True, timeout=120)
+        proc = await asyncio_to_subprocess_run(cmd, cwd=cwd, env=run_env, capture_output=True, text=True, timeout=run_timeout)
     except Exception as e:
         return _result("failed", f"Failed to run docker compose: {e}", error_code="COMPOSE_RUN_ERROR")
 

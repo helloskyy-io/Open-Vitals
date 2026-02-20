@@ -27,6 +27,8 @@ def validate_genesis_config(raw_config: dict) -> dict:
     openvitals = (raw_config or {}).get("openvitals") or {}
     validated["project_root"] = openvitals.get("project_root") or ""
     validated["database"] = openvitals.get("database") or {}
+    jupyter_cfg = openvitals.get("jupyter") or {}
+    validated["jupyter"] = {"port": jupyter_cfg.get("port") or 8888}
 
     return validated
 
@@ -58,6 +60,16 @@ def compile_execution_plan(validated_config: dict, secrets: dict) -> dict:
     db_name = db_config.get("name") or "openvitals"
     db_port_host = db_config.get("port") or 5433  # host port in config; compose uses OPENVITALS_DB_PORT
     db_password = (secrets or {}).get("OPENVITALS_DB_PASSWORD") or ""
+    project_root = validated_config.get("project_root") or ""
+
+    # env_vars for any compose run that loads dev.override.yml must include REPO_ROOT so jupyter volume parses
+    db_env_vars = {
+        "OPENVITALS_DB_USER": db_user,
+        "OPENVITALS_DB_NAME": db_name,
+        "OPENVITALS_DB_PORT": str(db_port_host),
+    }
+    if project_root:
+        db_env_vars["REPO_ROOT"] = project_root
 
     steps = [
         {
@@ -67,11 +79,7 @@ def compile_execution_plan(validated_config: dict, secrets: dict) -> dict:
                 "compose_files": compose_files,
                 "env_file": env_file,
                 "service_name": "openvitals-db",
-                "env_vars": {
-                    "OPENVITALS_DB_USER": db_user,
-                    "OPENVITALS_DB_NAME": db_name,
-                    "OPENVITALS_DB_PORT": str(db_port_host),
-                },
+                "env_vars": db_env_vars,
             },
             "timeout_seconds": 120,
         },
@@ -87,4 +95,31 @@ def compile_execution_plan(validated_config: dict, secrets: dict) -> dict:
             "timeout_seconds": 15,
         },
     ]
+
+    # Dev only: bring up Jupyter and verify it is up (defined only in dev.override.yml; port from config)
+    jupyter_cfg = validated_config.get("jupyter") or {}
+    jupyter_port = jupyter_cfg.get("port") or 8888
+    if env == "dev" and project_root:
+        steps.append(
+            {
+                "activity": "docker_compose_up",
+                "args": {
+                    "compose_dir": compose_dir,
+                    "compose_files": compose_files,
+                    "env_file": env_file,
+                    "service_name": "jupyter",
+                    "env_vars": {"REPO_ROOT": project_root, "JUPYTER_PORT": str(jupyter_port)},
+                    "timeout_seconds": 360,
+                },
+                "timeout_seconds": 360,
+            }
+        )
+        steps.append(
+            {
+                "activity": "verify_jupyter_up",
+                "args": {"host": "jupyter", "port": jupyter_port},
+                "timeout_seconds": 15,
+            }
+        )
+
     return {"steps": steps}

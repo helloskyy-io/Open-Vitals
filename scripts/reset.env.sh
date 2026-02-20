@@ -73,7 +73,7 @@ step_containers() {
     -f "$COMPOSE_DIR/25-openvitals-db.yml" \
     down 2>/dev/null || true
   # Fallback: remove by name in case project name differs
-  for c in temporal-db temporal-server temporal-ui temporal-worker openvitals-db; do
+  for c in temporal-db temporal-server temporal-ui temporal-worker openvitals-db jupyter; do
     docker rm -f "$c" 2>/dev/null || true
   done
   log_info "Containers removed"
@@ -175,7 +175,7 @@ main() {
   DID_OPENVITALS_VOL=""
   DID_CONFIG_FILES=""
 
-  if confirm_step "This will stop and remove all existing containers (temporal-db, temporal-server, temporal-ui, temporal-worker, openvitals-db). YES to continue, NO to skip:"; then
+  if confirm_step "This will stop and remove all existing containers (temporal-db, temporal-server, temporal-ui, temporal-worker, openvitals-db, jupyter). YES to continue, NO to skip:"; then
     step_containers
     DID_CONTAINERS=1
   fi

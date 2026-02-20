@@ -15,6 +15,7 @@ with workflow.unsafe.imports_passed_through():
     from openvitals.orchestration.temporal.activities.secrets.load_secrets import load_secrets
     from openvitals.orchestration.temporal.activities.db.docker_compose_up import docker_compose_up
     from openvitals.orchestration.temporal.activities.db.verify_postgres_up import verify_postgres_up
+    from openvitals.orchestration.temporal.activities.dev.verify_jupyter_up import verify_jupyter_up
 
 from openvitals.orchestration.temporal.modules.bootstrap import genesis_helper
 
@@ -22,12 +23,14 @@ from openvitals.orchestration.temporal.modules.bootstrap import genesis_helper
 _PLAN_ACTIVITIES = {
     "docker_compose_up": docker_compose_up,
     "verify_postgres_up": verify_postgres_up,
+    "verify_jupyter_up": verify_jupyter_up,
 }
 
 # Argument keys in the order each activity expects (for positional args to execute_activity)
 _PLAN_ACTIVITY_ARG_ORDER = {
-    "docker_compose_up": ("compose_dir", "compose_files", "env_file", "service_name", "env_vars"),
+    "docker_compose_up": ("compose_dir", "compose_files", "env_file", "service_name", "env_vars", "timeout_seconds"),
     "verify_postgres_up": ("host", "port", "user", "db_name", "password"),
+    "verify_jupyter_up": ("host", "port"),
 }
 
 

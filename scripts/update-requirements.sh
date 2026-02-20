@@ -2,7 +2,7 @@
 #
 # OpenVitals — Update requirements and rebuild stack (no volume/config reset)
 #
-# Stops and removes all containers (temporal-*, openvitals-db), then re-runs the
+# Stops and removes all containers (temporal-*, openvitals-db, jupyter), then re-runs the
 # main bootstrap script. Bootstrap will:
 #   - Update the local venv (pip install -r requirements.txt)
 #   - Rebuild and start all containers (including the worker with new deps)
@@ -90,7 +90,7 @@ main() {
     -f "$OVERRIDE_FILE" \
     down 2>/dev/null || true
 
-  for c in temporal-db temporal-server temporal-ui temporal-worker openvitals-db; do
+  for c in temporal-db temporal-server temporal-ui temporal-worker openvitals-db jupyter; do
     docker rm -f "$c" 2>/dev/null || true
   done
 

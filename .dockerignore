@@ -1,0 +1,18 @@
+# Build context is repo root (e.g. docker compose build jupyter). Exclude large or unnecessary paths.
+.git
+.venv
+.env
+config.yaml
+*.log
+__pycache__
+*.pyc
+.pytest_cache
+.mypy_cache
+data/
+reports/
+notebooks/
+*.ipynb_checkpoints
+.cursor
+.idea
+*.md
+!requirements*.txt

@@ -1,6 +1,7 @@
 OpenVitals Repo Folder Structure (planned)
 
 openvitals/
+├── .venv/                                          # env / python packages
 ├── data/                                           # ALWAYS gitignored (local only)
 │   ├── processed/
 │   ├── raw/
