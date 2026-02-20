@@ -29,6 +29,11 @@ def validate_genesis_config(raw_config: dict) -> dict:
     validated["database"] = openvitals.get("database") or {}
     jupyter_cfg = openvitals.get("jupyter") or {}
     validated["jupyter"] = {"port": jupyter_cfg.get("port") or 8888}
+    pgadmin_cfg = openvitals.get("pgadmin") or {}
+    validated["pgadmin"] = {
+        "port": pgadmin_cfg.get("port") or 5050,
+        "default_email": pgadmin_cfg.get("default_email") or "admin@local.dev",
+    }
 
     return validated
 
@@ -118,7 +123,44 @@ def compile_execution_plan(validated_config: dict, secrets: dict) -> dict:
             {
                 "activity": "verify_jupyter_up",
                 "args": {"host": "jupyter", "port": jupyter_port},
-                "timeout_seconds": 15,
+                "timeout_seconds": 210,
+            }
+        )
+
+    # Dev only: bring up pgAdmin and verify it is up (defined only in dev.override.yml; port/email from config, password from secrets)
+    # Any compose run that loads dev.override.yml must pass REPO_ROOT (compose parses all services; jupyter's volume requires it).
+    pgadmin_cfg = validated_config.get("pgadmin") or {}
+    pgadmin_port = pgadmin_cfg.get("port") or 5050
+    pgadmin_email = pgadmin_cfg.get("default_email") or "admin@local.dev"
+    pgadmin_password = (secrets or {}).get("PGADMIN_DEFAULT_PASSWORD") or ""
+    if env == "dev":
+        pgadmin_env_vars = {
+            "PGADMIN_PORT": str(pgadmin_port),
+            "PGADMIN_LISTEN_PORT": str(pgadmin_port),
+            "PGADMIN_DEFAULT_EMAIL": pgadmin_email,
+            "PGADMIN_DEFAULT_PASSWORD": pgadmin_password,
+        }
+        if project_root:
+            pgadmin_env_vars["REPO_ROOT"] = project_root
+        steps.append(
+            {
+                "activity": "docker_compose_up",
+                "args": {
+                    "compose_dir": compose_dir,
+                    "compose_files": compose_files,
+                    "env_file": env_file,
+                    "service_name": "pgadmin",
+                    "env_vars": pgadmin_env_vars,
+                    "timeout_seconds": 120,
+                },
+                "timeout_seconds": 120,
+            }
+        )
+        steps.append(
+            {
+                "activity": "verify_pgadmin_up",
+                "args": {"host": "pgadmin", "port": pgadmin_port},
+                "timeout_seconds": 210,
             }
         )
 

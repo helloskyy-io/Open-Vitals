@@ -1,6 +1,6 @@
 # Docker Compose override for DEV environment
 # Selected when config.yaml has temporal.deployment_env: dev.
-# Defines dev-only services (e.g. Jupyter). Test/prod overrides don't define these, so they never run.
+# Defines dev-only services (e.g. Jupyter, pgAdmin). Test/prod overrides don't define these, so they never run.
 
 services:
   # Jupyter Lab (dev only): port from config (openvitals.jupyter.port). REPO_ROOT and JUPYTER_PORT set when running compose (Genesis).
@@ -16,6 +16,20 @@ services:
       - JUPYTER_PORT=${JUPYTER_PORT:-8888}
     volumes:
       - ${REPO_ROOT:?REPO_ROOT must be set (e.g. by Genesis)}:/workspace
+    networks:
+      - openvitals
+    restart: unless-stopped
+
+  # pgAdmin 4 (dev only): port and login from config + .env. PGADMIN_* set when running compose (Genesis).
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    ports:
+      - "127.0.0.1:${PGADMIN_PORT:-5050}:${PGADMIN_LISTEN_PORT:-5050}"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL:-admin@local.dev}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD:-}
+      - PGADMIN_LISTEN_PORT=${PGADMIN_LISTEN_PORT:-5050}
     networks:
       - openvitals
     restart: unless-stopped

@@ -13,3 +13,6 @@ openvitals:
     name: openvitals
   jupyter:                                      # dev-only; port Jupyter listens on (host and container)
     port: 8888
+  pgadmin:                                      # dev-only; pgAdmin 4 login and port
+    port: 5050
+    default_email: admin@local.dev

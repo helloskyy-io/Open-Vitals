@@ -327,6 +327,16 @@ create_config_files() {
       fi
     fi
 
+    if grep -q 'PGADMIN_DEFAULT_PASSWORD="YOUR_SECURE_PGADMIN_PASSWORD_HERE"' "$ENV_FILE" 2>/dev/null; then
+      local pgadmin_pwd
+      pgadmin_pwd=$(openssl rand -base64 32 | tr -d '=+/' | cut -c1-25)
+      if sed -i "s|PGADMIN_DEFAULT_PASSWORD=\"YOUR_SECURE_PGADMIN_PASSWORD_HERE\"|PGADMIN_DEFAULT_PASSWORD=\"$pgadmin_pwd\"|" "$ENV_FILE" 2>/dev/null; then
+        log_info "Generated PGADMIN_DEFAULT_PASSWORD and wrote to .env"
+      else
+        log_warn "Could not replace PGADMIN_DEFAULT_PASSWORD placeholder; set it in .env manually"
+      fi
+    fi
+
     log_info "Created .env from template"
     log_warn "Review and update secrets in .env as needed"
     files_created=true

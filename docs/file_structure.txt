@@ -119,9 +119,10 @@ openvitals/
 │       │       │   │   ├── __init__.py
 │       │       │   │   ├── helpers.py
 │       │       │   │   └── workflows.py            # ComputeSetA, GenerateReport, etc.
-│       │       │   ├── bootstrap/
-│       │       │   │   ├── genesis_helper.py
-│       │       │   │   └── workflows.py
+│       │       │   ├── platform/                   # platform lifecycle (provision, drift, versioning)
+│       │       │   │   └── provision/
+│       │       │   │       ├── genesis_workflow.py # Genesis (big-bang / bootstrap)
+│       │       │   │       └── genesis_helper.py
 │       │       │   └── ingestion/
 │       │       │       ├── __init__.py
 │       │       │       ├── helpers.py

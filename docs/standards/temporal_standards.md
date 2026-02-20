@@ -39,9 +39,10 @@ Layout under **`src/openvitals/orchestration/temporal/`**:
 temporal/
 ├── worker.py                    # Worker entrypoint; registers workflows and activities
 ├── modules/                     # Workflow modules (by purpose)
-│   ├── bootstrap/               # Bootstrap / deployment (e.g. Genesis)
-│   │   ├── genesis_workflow.py  # Genesis workflow (orchestration)
-│   │   └── genesis_helper.py    # Helper: validation & execution plan (pure)
+│   ├── platform/                # Platform lifecycle (provision, drift, versioning)
+│   │   └── provision/           # Provision = Genesis (big-bang) and future drift/update workflows
+│   │       ├── genesis_workflow.py  # Genesis workflow (one-time provision)
+│   │       └── genesis_helper.py    # Helper: validation & execution plan (pure)
 │   └── ...                      # Future: ingestion, analytics, etc.
 └── activities/                  # Reusable activities (outside modules)
     ├── config/                  # Config loading (first activity in most workflows)
@@ -50,7 +51,7 @@ temporal/
     └── ...                      # Other domains as needed
 ```
 
-- **Modules** are named by **what they do** (e.g. `bootstrap` for deployment). Each workflow has its own folder or files: `{workflow_name}_workflow.py` and `{workflow_name}_helper.py`.
+- **Modules** are named by **what they do** (e.g. `platform/provision` for Genesis and future drift/version workflows). Each workflow has its own file: `{workflow_name}_workflow.py` and `{workflow_name}_helper.py`.
 - **Workflow folders** are only created when workflows are implemented (no placeholder-only folders).
 - **Activities** are grouped by **domain** (config, secrets, db, docker, etc.). Each activity file does one thing; activities are workflow-agnostic and reusable.
 

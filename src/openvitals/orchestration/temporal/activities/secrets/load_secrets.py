@@ -17,7 +17,11 @@ _DEFAULT_REPO_ROOT = os.environ.get("OPENVITALS_REPO_ROOT", "/workspace")
 _DEFAULT_ENV_PATH = Path(_DEFAULT_REPO_ROOT) / ".env"
 
 # Keys Genesis (and other workflows) may need; only these are returned
-GENESIS_SECRET_KEYS = frozenset({"OPENVITALS_DB_PASSWORD", "TEMPORAL_POSTGRES_PASSWORD"})
+GENESIS_SECRET_KEYS = frozenset({
+    "OPENVITALS_DB_PASSWORD",
+    "TEMPORAL_POSTGRES_PASSWORD",
+    "PGADMIN_DEFAULT_PASSWORD",
+})
 
 
 def _parse_dotenv(path: Path) -> dict[str, str]:
@@ -51,7 +55,7 @@ async def load_secrets(
         env_path: Optional path to .env. If None, uses
             OPENVITALS_REPO_ROOT/.env (in container, set by compose to mount path).
         keys: Optional list of keys to return. If None, returns GENESIS_SECRET_KEYS
-            (OPENVITALS_DB_PASSWORD, TEMPORAL_POSTGRES_PASSWORD).
+            (OPENVITALS_DB_PASSWORD, TEMPORAL_POSTGRES_PASSWORD, PGADMIN_DEFAULT_PASSWORD).
 
     Returns:
         Dict with status, details, artifacts["secrets"] = dict of key -> value (serializable).

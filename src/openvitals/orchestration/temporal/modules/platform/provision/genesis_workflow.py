@@ -1,7 +1,7 @@
 """
-Bootstrap / Genesis workflows.
+Genesis workflow (one-time platform provision / big-bang).
 
-Genesis: deploy OpenVitals Postgres, create DB/user, run migrations.
+Deploy OpenVitals Postgres, create DB/user, run migrations; in dev also Jupyter and pgAdmin.
 Pattern: load_config → load_secrets → helper validate → helper compile → execute plan.
 """
 
@@ -16,14 +16,16 @@ with workflow.unsafe.imports_passed_through():
     from openvitals.orchestration.temporal.activities.db.docker_compose_up import docker_compose_up
     from openvitals.orchestration.temporal.activities.db.verify_postgres_up import verify_postgres_up
     from openvitals.orchestration.temporal.activities.dev.verify_jupyter_up import verify_jupyter_up
+    from openvitals.orchestration.temporal.activities.dev.verify_pgadmin_up import verify_pgadmin_up
 
-from openvitals.orchestration.temporal.modules.bootstrap import genesis_helper
+from openvitals.orchestration.temporal.modules.platform.provision import genesis_helper
 
 # Map plan step activity names to activity functions (for execute plan loop)
 _PLAN_ACTIVITIES = {
     "docker_compose_up": docker_compose_up,
     "verify_postgres_up": verify_postgres_up,
     "verify_jupyter_up": verify_jupyter_up,
+    "verify_pgadmin_up": verify_pgadmin_up,
 }
 
 # Argument keys in the order each activity expects (for positional args to execute_activity)
@@ -31,6 +33,7 @@ _PLAN_ACTIVITY_ARG_ORDER = {
     "docker_compose_up": ("compose_dir", "compose_files", "env_file", "service_name", "env_vars", "timeout_seconds"),
     "verify_postgres_up": ("host", "port", "user", "db_name", "password"),
     "verify_jupyter_up": ("host", "port"),
+    "verify_pgadmin_up": ("host", "port"),
 }
 
 
@@ -117,5 +120,4 @@ class GenesisWorkflow:
         }
 
 
-# Keep genesis_heartbeat import for backward compat if needed; workflow no longer calls it
 __all__ = ["GenesisWorkflow"]
