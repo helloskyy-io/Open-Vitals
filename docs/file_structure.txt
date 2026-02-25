@@ -62,6 +62,8 @@ openvitals/
 │   └── TECH_STACK.md
 ├── notebooks/                                      # dev-only (not required for running pipeline)
 │   ├── 00_environment_check.ipynb
+│   ├── 02_google_fit_schema_recon.ipynb            # Stage 2 (Member A)
+│   ├── 02_apple_health_schema_recon.ipynb          # Stage 2 (Member B)
 │   ├── 10_google_fit_parse.ipynb
 │   ├── 11_apple_health_parse.ipynb
 │   ├── 20_metrics_set_a.ipynb
