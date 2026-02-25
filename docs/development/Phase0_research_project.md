@@ -330,7 +330,7 @@ Jupyter-driven: notebook discovers structure and writes the deliverables below. 
 
 **Notebooks:**
 
-* [ ] `notebooks/02_google_fit_schema_recon.ipynb` (Member A)
+* [x] `notebooks/02_google_fit_schema_recon.ipynb` (Member A)
 * [ ] `notebooks/02_apple_health_schema_recon.ipynb` (Member B)
 
 Notebook can write the `.md` source schema docs and raw directory log so outputs are reproducible from the data.
@@ -338,8 +338,8 @@ Notebook can write the `.md` source schema docs and raw directory log so outputs
 ### 2.1 Google Fit export mapping (Member A)
 
 * [x] **Folder structure:** Map out the folder structure (e.g. `tree` or Python `pathlib`/`os.walk`). Document it (in source schema doc or as notebook output).
-* [ ] **Data headers:** Map all data headers with path — for each structured file (CSV, JSON, etc.), list path and column/field headers. Document.
-* [ ] **Set A mapping:** Map the required class project data to paths: steps, sleep, resting heart rate. Identify and document the path(s) used for each (e.g. steps → …, sleep → …, heart rate → …).
+* [x] **Data headers:** Map all data headers with path — for each structured file (CSV, JSON, etc.), list path and column/field headers. Document.
+* [x] **Set A mapping:** Map the required class project data to paths: steps, sleep, resting heart rate. Identify and document the path(s) used for each (e.g. steps → …, sleep → …, heart rate → …).
 * [ ] **Date range:** Compute min/max dates from the key data; record for the dataset datasheet (Stage 1.3).
 * [ ] **Raw directory log:** In `data/raw/google_fit/`, maintain a markdown file (e.g. `README.md`) that is a log of what is in that directory — each file or export folder with metadata (filename, export date from name, source, date range of data when discovered). Generate from notebook; idempotent.
 * [ ] Create `docs/data/source_schemas/google_fit.md` (folder structure, data headers+paths, Set A mapping, and any non-standard file types noted).
