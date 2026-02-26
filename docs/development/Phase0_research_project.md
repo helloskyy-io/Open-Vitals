@@ -271,7 +271,7 @@ Layout: `docker/compose/00-networks.yml`, `10-temporal.yml`, and env overrides (
 
 # Stage 1 — Export Acquisition + Dataset Datasheet
 
-Stage 1: acquire exports, place in correct directories with correct naming; create dataset datasheet. No metadata file in Stage 1 (date in filename, source from folder; raw directory log is Stage 2).
+Stage 1: acquire exports, place in correct directories with correct naming; create dataset datasheet. No metadata file in Stage 1 (date in filename, source from folder; raw exports log (JSON) is Stage 2).
 
 ### 1.1 Google Takeout export captured (Member A)
 
@@ -294,19 +294,19 @@ Defines the datasets used for the class project. One file, manually maintained. 
 
 ## Google (Fit + Fitbit)
 
-- **Provenance:** 
-- **Export date(s):** 
-- **Time range of data:** (approximate start–end; fill when Stage 2 recon is done)
+- **Provenance:** *(Origin and how the data was obtained — e.g. “Google Takeout requested by [role] on [date]; unzipped to `data/raw/google_fit/takeout_YYYY-MM-DD/`.”)*
+- **Export date(s):** *(When the export was created — e.g. `2026-02-21`; from folder name or `raw_exports.json`.)*
+- **Time range of data:** *(Earliest to latest date actually present in the data — e.g. `2024-01-10` to `2026-02-21`; from Stage 2 date-range scan / `raw_exports.json`.)*
 - **Source:** Google Takeout — Fit, Fitbit
-- **Known limitations:** 
+- **Known limitations:** *(Gaps, caveats, or exclusions — e.g. “No heart-rate data before 2025-10”; “Some folders have no time columns.”)*
 
 ## Apple Health
 
-- **Provenance:** 
-- **Export date(s):** 
-- **Time range of data:** (approximate start–end; fill when Stage 2 recon is done)
+- **Provenance:** *(Origin and how the data was obtained — e.g. “Apple Health export from iPhone; exported on [date]; stored at `data/raw/apple_health/`.”)*
+- **Export date(s):** *(When the export was created — e.g. `2026-02-15`.)*
+- **Time range of data:** *(Earliest to latest date in the export — fill when Stage 2 recon is done.)*
 - **Source:** Apple Health export
-- **Known limitations:** 
+- **Known limitations:** *(Gaps, caveats, or exclusions.)*
 
 ## Privacy / ethics
 
@@ -333,24 +333,24 @@ Jupyter-driven: notebook discovers structure and writes the deliverables below. 
 * [x] `notebooks/02_google_fit_schema_recon.ipynb` (Member A)
 * [ ] `notebooks/02_apple_health_schema_recon.ipynb` (Member B)
 
-Notebook can write the `.md` source schema docs and raw directory log so outputs are reproducible from the data.
+Notebook can write the `.md` source schema docs and raw exports log (JSON) so outputs are reproducible from the data.
 
-### 2.1 Google Fit export mapping (Member A)
+### 2.1 Google Fit export mapping (Member A) via jupyter notebook
 
 * [x] **Folder structure:** Map out the folder structure (e.g. `tree` or Python `pathlib`/`os.walk`). Document it (in source schema doc or as notebook output).
 * [x] **Data headers:** Map all data headers with path — for each structured file (CSV, JSON, etc.), list path and column/field headers. Document.
 * [x] **Set A mapping:** Map the required class project data to paths: steps, sleep, resting heart rate. Identify and document the path(s) used for each (e.g. steps → …, sleep → …, heart rate → …).
-* [ ] **Date range:** Compute min/max dates from the key data; record for the dataset datasheet (Stage 1.3).
-* [ ] **Raw directory log:** In `data/raw/google_fit/`, maintain a markdown file (e.g. `README.md`) that is a log of what is in that directory — each file or export folder with metadata (filename, export date from name, source, date range of data when discovered). Generate from notebook; idempotent.
+* [x] **Date range:** Compute min/max dates from the key data; record for the dataset datasheet (Stage 1.3).
+* [x] **Raw exports log:** In `data/raw/google_fit/`, maintain a machine-readable JSON log file (`raw_exports.json`) — one entry per export folder with metadata (export folder name, export date from path, source, data date range, valid range used, folder/file counts, log_updated). Generate from notebook (Block 4); idempotent (replace or append entry for current export).
 * [ ] Create `docs/data/source_schemas/google_fit.md` (folder structure, data headers+paths, Set A mapping, and any non-standard file types noted).
 
-### 2.2 Apple Health export mapping (Member B)
+### 2.2 Apple Health export mapping (Member B) via jupyter notebook
 
 * [ ] **Folder structure:** Map out the folder structure; document it.
 * [ ] **Data headers:** Map all data headers with path; document.
 * [ ] **Set A mapping:** Map steps, sleep, resting heart rate to paths; document.
 * [ ] **Date range:** Compute min/max from key data; record for dataset datasheet.
-* [ ] **Raw directory log:** In `data/raw/apple_health/`, maintain a markdown file (e.g. `README.md`) — log of contents and metadata per file. Generate from notebook.
+* [ ] **Raw exports log:** In `data/raw/apple_health/`, maintain a machine-readable JSON log file (e.g. `raw_exports.json`) — one entry per export with metadata (export folder, export date, source, data date range, counts, log_updated). Generate from notebook; idempotent.
 * [ ] Create `docs/data/source_schemas/apple_health.md` (structure, headers+paths, Set A mapping).
 
 **Deliverables:**
@@ -359,7 +359,7 @@ Notebook can write the `.md` source schema docs and raw directory log so outputs
 * [ ] `notebooks/02_apple_health_schema_recon.ipynb`
 * [ ] `docs/data/source_schemas/google_fit.md`
 * [ ] `docs/data/source_schemas/apple_health.md`
-* [ ] Raw directory log in markdown (e.g. `data/raw/google_fit/README.md`, `data/raw/apple_health/README.md`) — log of what’s in the directory and metadata per file; from notebook
+* [ ] Raw exports log in JSON (e.g. `data/raw/google_fit/raw_exports.json`, `data/raw/apple_health/raw_exports.json`) — one entry per export folder with metadata; generated from notebook (idempotent)
 
 ---
 
