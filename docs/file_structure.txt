@@ -3,10 +3,14 @@ OpenVitals Repo Folder Structure (planned)
 openvitals/
 ├── .venv/                                          # env / python packages
 ├── data/                                           # ALWAYS gitignored (local only)
-│   ├── processed/
-│   ├── raw/
-│   │   ├── apple_health/
-│   │   └── google_fit/
+│   ├── bronze/                                     # Stage 3: deduplicated raw store (content-addressed)
+│   │   ├── apple_health/                           # vendor-original files, one copy per unique hash
+│   │   ├── google_fit/
+│   │   └── (manifest: JSON or DB — file_hash, paths, processed_to_silver; see data_management.md)
+│   ├── processed/                                  # Gold outputs (e.g. comparison_results.csv)
+│   ├── raw/                                        # Landing zone: exports arrive here (unzip to takeout_YYYY-MM-DD/, etc.)
+│   │   ├── apple_health/                           # raw_exports.json (Stage 2), apple_health_YYYY-MM-DD.zip or dir
+│   │   └── google_fit/                             # raw_exports.json (Stage 2), takeout_YYYY-MM-DD.zip or dir
 │   └── README.md
 ├── docker/
 │   ├── compose/
@@ -48,7 +52,7 @@ openvitals/
 │   ├── metrics/
 │   │   └── set_a_definitions.md
 │   ├── schema/
-│   │   └── canonical_schema_v0.md                  # (future)
+│   │   └── canonical_schema_v0.md                  # Stage 4 Silver — canonical schema doc (Phase 0: docs/canonical_schema_v0.md)
 │   ├── standards/
 │   │   ├── docker_compose_layout.md
 │   │   ├── env_and_config.md
@@ -62,13 +66,14 @@ openvitals/
 │   └── TECH_STACK.md
 ├── notebooks/                                      # dev-only (not required for running pipeline)
 │   ├── 00_environment_check.ipynb
-│   ├── 02_google_fit_schema_recon.ipynb            # Stage 2 (Member A)
+│   ├── 02_google_fit_schema_recon.ipynb            # Stage 2 — Exploration & catalog (Member A)
 │   ├── 02_apple_health_schema_recon.ipynb          # Stage 2 (Member B)
-│   ├── 10_google_fit_parse.ipynb
+│   ├── 03_bronze_ingest.ipynb                      # Stage 3 — run Bronze pipeline / validate manifest
+│   ├── 10_google_fit_parse.ipynb                  # Stage 4 Silver — parse from Bronze → Postgres
 │   ├── 11_apple_health_parse.ipynb
-│   ├── 20_metrics_set_a.ipynb
+│   ├── 20_metrics_set_a.ipynb                      # Stage 5 Gold
 │   ├── 30_vendor_comparison.ipynb
-│   └── 40_plots.ipynb
+│   └── 40_plots.ipynb                              # Stage 6
 ├── reports/                                        # (future)
 │   ├── figures/
 │   │   └── README.md                               # captions + purpose for each figure
@@ -99,12 +104,15 @@ openvitals/
 │   └── schema_v0.sql
 ├── src/
 │   └── openvitals/
-│       ├── adapters/
+│       ├── adapters/                               # Stage 4 Silver — read from data/bronze/, write to Postgres
 │       │   ├── apple_health/
 │       │   │   ├── parse_heart_rate.py
 │       │   │   ├── parse_sleep.py
 │       │   │   └── parse_steps.py
 │       │   └── google_fit/
+│       ├── ingestion/                               # Stage 3 Bronze — landing zone → bronze, manifest
+│       │   ├── __init__.py
+│       │   └── bronze_ingest.py                     # hash, dedup, copy to data/bronze/; update manifest
 │       ├── analytics/
 │       │   ├── __init__.py
 │       │   ├── evaluation.py                       # MAE/RMSE/correlation/missingness
@@ -170,4 +178,5 @@ openvitals/
 Notes
 - Phase 0 runs without Django; Temporal (bootstrap + Genesis) deploys OpenVitals Postgres; worker runs workflows/activities.
 - data/ is always local-only (raw exports must never be committed).
+- Bronze/Silver/Gold: raw/ = landing zone (exports arrive); bronze/ = deduplicated raw store + manifest; Silver = Postgres canonical tables (schema_v0); Gold = derived metrics + data/processed outputs.
 - Python packages use __init__.py (not shown above). Worker image built from repo root requirements.txt.

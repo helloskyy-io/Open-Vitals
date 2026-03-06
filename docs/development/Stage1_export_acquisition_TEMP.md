@@ -14,7 +14,7 @@
 | **1.2** | Member B (Apple) | Acquire Apple Health export, place in repo with correct path and name |
 | **1.3** | Team (or Member C) | Create dataset datasheet at `docs/data/dataset_description.md` |
 
-**Stage 1 deliverables:** Raw exports in the correct directories with correct naming; dataset datasheet. The raw directory log (what’s in each raw folder, metadata per file) and date range are produced in Stage 2 from the Jupyter notebook.
+**Stage 1 deliverables:** Raw exports in the correct directories with correct naming; dataset datasheet. The raw exports log (JSON, per-export metadata) and date range are produced in Stage 2 from the Jupyter notebook. Bronze ingestion (dedup into `data/bronze/`) is Stage 3.
 
 **Doc layout:** See `docs/file_structure.txt`. Dataset datasheet → `docs/data/dataset_description.md`. Source schemas and manual extraction procedures → `docs/data/source_schemas/`, `docs/data/extraction/manual/`.
 
@@ -103,7 +103,7 @@ Can be drafted once at least one export exists; update when both exist and when 
 
 ## Stage 2 — Source Schema Recon (reference)
 
-Stage 2 produces: `docs/data/source_schemas/google_fit.md`, `apple_health.md`, and a **raw directory log** in markdown (e.g. `data/raw/google_fit/README.md`) — a log of what’s in that directory and metadata per file (filename, export date from name, source, date range when discovered). All generated from the Jupyter notebook. Full checklist: Phase 0 § Stage 2 (folder structure, data headers+paths, Set A mapping, date range, raw directory log, deliverables).
+Stage 2 produces: `docs/data/source_schemas/google_fit.md`, `apple_health.md`, and a **raw exports log** in JSON (e.g. `data/raw/google_fit/raw_exports.json`) — one entry per export with metadata (export folder, export date, source, data date range, counts). All generated from the Jupyter notebook. Full checklist: Phase 0 § Stage 2 (folder structure, data headers+paths, Set A mapping, date range, raw exports log, deliverables). Stage 3 (Bronze) then ingests the raw files into the deduplicated Bronze store.
 
 ---
 
@@ -128,5 +128,5 @@ Stage 2 produces: `docs/data/source_schemas/google_fit.md`, `apple_health.md`, a
 ## Branch strategy
 
 - Work on a feature branch (e.g. `feature/stage1-google-export`).
-- Do not commit raw data; only code, docs, and (from Stage 2) the raw-directory log (in data/, gitignored) and dataset datasheet.
+- Do not commit raw data; only code, docs, and (from Stage 2) the raw exports log (in data/, gitignored) and dataset datasheet.
 - Merge to `main` via PR.
