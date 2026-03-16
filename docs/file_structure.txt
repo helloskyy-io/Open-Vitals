@@ -65,11 +65,14 @@ openvitals/
 │   ├── ROADMAP.md
 │   └── TECH_STACK.md
 ├── notebooks/                                      # dev-only (not required for running pipeline)
+│   ├── scripts/                                    # notebook-specific scripts (invoked from .ipynb)
+│   │   ├── 02_google_fit_schema_recon/             # Stage 2 — date_range_scan, code_block_*, etc.
+│   │   └── 03_bronze_raw_data_store/               # Stage 3 — Bronze ingest logic (later → src/openvitals/ingestion/)
 │   ├── 00_environment_check.ipynb
 │   ├── 02_google_fit_schema_recon.ipynb            # Stage 2 — Exploration & catalog (Member A)
 │   ├── 02_apple_health_schema_recon.ipynb          # Stage 2 (Member B)
 │   ├── 03_bronze_ingest.ipynb                      # Stage 3 — run Bronze pipeline / validate manifest
-│   ├── 10_google_fit_parse.ipynb                  # Stage 4 Silver — parse from Bronze → Postgres
+│   ├── 10_google_fit_parse.ipynb                   # Stage 4 Silver — parse from Bronze → Postgres
 │   ├── 11_apple_health_parse.ipynb
 │   ├── 20_metrics_set_a.ipynb                      # Stage 5 Gold
 │   ├── 30_vendor_comparison.ipynb
@@ -110,9 +113,9 @@ openvitals/
 │       │   │   ├── parse_sleep.py
 │       │   │   └── parse_steps.py
 │       │   └── google_fit/
-│       ├── ingestion/                               # Stage 3 Bronze — landing zone → bronze, manifest
+│       ├── ingestion/                              # Stage 3 Bronze — landing zone → bronze, manifest (promote from notebooks/scripts/03_bronze_raw_data_store when stable)
 │       │   ├── __init__.py
-│       │   └── bronze_ingest.py                     # hash, dedup, copy to data/bronze/; update manifest
+│       │   └── bronze_ingest.py                    # hash, dedup, copy to data/bronze/; update manifest
 │       ├── analytics/
 │       │   ├── __init__.py
 │       │   ├── evaluation.py                       # MAE/RMSE/correlation/missingness

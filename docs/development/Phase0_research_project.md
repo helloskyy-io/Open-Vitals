@@ -318,9 +318,11 @@ Defines the datasets used for the class project. One file, manually maintained. 
   * [ ] Apple section filled (provenance, export date(s), time range when known, limitations)
   * [ ] Privacy/ethics filled
 
+**Deferred:** Completion of the dataset datasheet (filling Google/Apple sections from live data) is deferred to Stage 3. Once the Bronze pipeline and manifest exist, we can generate or populate `dataset_description.md` from manifest metadata and circle back to mark 1.3 complete.
+
 **Deliverables:**
 
-* [ ] `docs/data/dataset_description.md`
+* [ ] `docs/data/dataset_description.md` (template in place; full fill deferred to Stage 3)
 
 ---
 
@@ -342,7 +344,7 @@ Notebook can write the `.md` source schema docs and raw exports log (JSON) so ou
 * [x] **Set A mapping:** Map the required class project data to paths: steps, sleep, resting heart rate. Identify and document the path(s) used for each (e.g. steps → …, sleep → …, heart rate → …).
 * [x] **Date range:** Compute min/max dates from the key data; record for the dataset datasheet (Stage 1.3).
 * [x] **Raw exports log:** In `data/raw/google_fit/`, maintain a machine-readable JSON log file (`raw_exports.json`) — one entry per export folder with metadata (export folder name, export date from path, source, data date range, valid range used, folder/file counts, log_updated). Generate from notebook (Block 4); idempotent (replace or append entry for current export).
-* [ ] Create `docs/data/source_schemas/google_fit.md` (folder structure, data headers+paths, Set A mapping, and any non-standard file types noted).
+* [ ] Create `docs/data/source_schemas/google_fit.md` (folder structure, data headers+paths, Set A mapping, and any non-standard file types noted). **Deferred:** Temporarily deferred to Stage 3; will revisit when Bronze automation is in place (e.g. generate from notebook output or from manifest). Circle back later.
 
 ### 2.2 Apple Health export mapping (Member B) via jupyter notebook
 
@@ -367,14 +369,16 @@ Notebook can write the `.md` source schema docs and raw exports log (JSON) so ou
 
 > Goal: build the permanent, deduplicated, vendor-original-format data store. `data/raw/` is the landing zone (where exports arrive); `data/bronze/` is the permanent store (what all downstream processing reads from). The Bronze ingestion pipeline moves unique files from landing zone to Bronze, tracking everything in a manifest.
 
+**Development approach:** Stage 3 is built out initially as a notebook (`notebooks/03_bronze_ingest.ipynb`) with supporting scripts under `notebooks/scripts/03_bronze_raw_data_store/`. Once the logic is stable, we will move the automation into the permanent location `src/openvitals/ingestion/bronze_ingest.py` for reuse by pipelines and (later) Temporal workflows.
+
 ### 3.1 Define Bronze directory structure
 
-* [ ] Create `data/bronze/google_fit/` and `data/bronze/apple_health/` (gitignored like `data/raw/`)
+* [x] Create `data/bronze/google_fit/` and `data/bronze/apple_health/` (gitignored like `data/raw/`)
 * [ ] Document the Bronze layout in `docs/standards/data_management.md` (update with concrete paths and conventions)
 
 ### 3.2 Build landing-zone-to-Bronze ingestion pipeline
 
-* [ ] Create ingestion script/module (e.g. `src/openvitals/ingestion/bronze_ingest.py` or `scripts/bronze_ingest.py`):
+* [ ] Create ingestion logic (initially under `notebooks/scripts/03_bronze_raw_data_store/`; later promote to `src/openvitals/ingestion/bronze_ingest.py`):
 
   * [ ] Scan landing zone export folder (e.g. `data/raw/google_fit/takeout_2026-02-21/`)
   * [ ] Hash each file (content-addressed; e.g. SHA-256)
@@ -401,7 +405,7 @@ Notebook can write the `.md` source schema docs and raw exports log (JSON) so ou
 
 ### 3.4 Notebook / validation
 
-* [ ] Create notebook `notebooks/03_bronze_ingest.ipynb` (or call script from notebook):
+* [ ] Create notebook `notebooks/03_bronze_ingest.ipynb` that calls the scripts in `notebooks/scripts/03_bronze_raw_data_store/` (or inlines the logic initially):
 
   * [ ] Run pipeline on Google Fit export
   * [ ] Run pipeline on Apple Health export (when available)
@@ -418,7 +422,7 @@ Notebook can write the `.md` source schema docs and raw exports log (JSON) so ou
 **Deliverables:**
 
 * [ ] `data/bronze/` directory structure (gitignored)
-* [ ] Bronze ingestion script (`src/openvitals/ingestion/bronze_ingest.py` or equivalent)
+* [ ] Bronze ingestion scripting under `notebooks/scripts/03_bronze_raw_data_store/` (initially); later promote to `src/openvitals/ingestion/bronze_ingest.py`
 * [ ] Bronze manifest (JSON file or Postgres table)
 * [ ] `notebooks/03_bronze_ingest.ipynb`
 * [ ] Updated `docs/standards/data_management.md` with concrete Bronze paths and conventions
