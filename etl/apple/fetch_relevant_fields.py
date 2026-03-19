@@ -267,12 +267,13 @@ def write_json(data: dict, out_path: Path) -> None:
 
 if __name__ == "__main__":
     # Expected workflow:
-    #   1) Drop export.xml into sample_data/
+    #   1) Drop export.xml into data/apple/
     #   2) Run this script
-    xml_path = Path("src/openvitals/adapters/apple_health/sample_data/export.xml")
-    out_path = Path("src/openvitals/adapters/apple_health/sample_data/hr_steps_sleep_record_types.json")
+    xml_path = Path("data/apple/export.xml")
+    out_path = Path("data/apple/hr_steps_sleep_record_types.json")
 
     summary = summarize_hr_steps_sleep(xml_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     write_json(summary, out_path)
 
     print(f"Wrote {out_path}")

@@ -1,0 +1,29 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: openvitals-postgres-test
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: openvitals
+      POSTGRES_USER: openvitals
+      POSTGRES_PASSWORD: openvitals
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: openvitals-pgadmin-test
+    depends_on:
+      - postgres
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: openvitals
+    volumes:
+      - pgadmin_test_data:/var/lib/pgadmin
+
+volumes:
+  postgres_test_data:
+  pgadmin_test_data:

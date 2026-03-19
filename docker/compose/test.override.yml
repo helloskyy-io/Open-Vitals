@@ -1,8 +1,0 @@
-# Docker Compose override for TEST environment
-# Selected when config.yaml has temporal.deployment_env: test.
-#
-# The bootstrap script picks dev.override.yml, test.override.yml, or prod.override.yml
-# based on that setting. This file is the one used for test. Empty (services: {}) means
-# "use base defaults." Add test-specific overrides here if needed (e.g. different ports).
-
-services: {}

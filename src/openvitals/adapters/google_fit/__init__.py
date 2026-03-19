@@ -1,1 +1,0 @@
-# Google Fit export adapter

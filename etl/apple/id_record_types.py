@@ -185,10 +185,11 @@ def write_summary(summary: dict, out_path: Path) -> None:
 
 
 if __name__ == "__main__":
-    xml_path = Path("src/openvitals/adapters/apple_health/sample_data/export.xml")  # <-- set your path
-    out_path = Path("src/openvitals/adapters/apple_health/sample_data/record_type_field_summary.json")
+    xml_path = Path("data/apple/export.xml")
+    out_path = Path("data/apple/record_type_field_summary.json")
 
     summary = summarize_records(xml_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     write_summary(summary, out_path)
 
     print(f"Wrote {out_path}")

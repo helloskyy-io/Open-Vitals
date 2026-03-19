@@ -1,1 +1,0 @@
-# Apple Health export adapter
