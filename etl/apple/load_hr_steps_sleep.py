@@ -255,6 +255,43 @@ def get_or_create_data_source(
     product = source_name
     device_model = None
 
+    # Primary identity rule for Apple sources:
+    # treat matching source names (case-insensitive) as the same logical source.
+    # This avoids creating one data_source row per sourceVersion change.
+    if product:
+        cur.execute(
+            """
+            SELECT source_id, device_raw, source_version
+            FROM data_source
+            WHERE vendor = %s
+              AND lower(product) = lower(%s)
+            ORDER BY source_id
+            LIMIT 1
+            """,
+            (vendor, product),
+        )
+        row = cur.fetchone()
+        if row:
+            source_id = int(row[0])
+            existing_device_raw = row[1]
+            existing_source_version = row[2]
+
+            # Backfill nullable fields once, but do not split identity by version/device.
+            if source_id and (
+                (existing_device_raw is None and device_raw is not None)
+                or (existing_source_version is None and source_version is not None)
+            ):
+                cur.execute(
+                    """
+                    UPDATE data_source
+                    SET device_raw = COALESCE(device_raw, %s),
+                        source_version = COALESCE(source_version, %s)
+                    WHERE source_id = %s
+                    """,
+                    (device_raw, source_version, source_id),
+                )
+            return source_id
+
     cur.execute(
         """
         SELECT source_id
