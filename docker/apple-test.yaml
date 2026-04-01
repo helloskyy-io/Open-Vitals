@@ -1,0 +1,50 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: openvitals-postgres-test
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: openvitals
+      POSTGRES_USER: openvitals
+      POSTGRES_PASSWORD: openvitals
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: openvitals-pgadmin-test
+    depends_on:
+      - postgres
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: openvitals
+    volumes:
+      - pgadmin_test_data:/var/lib/pgadmin
+
+  jupyter:
+    image: jupyter/minimal-notebook:latest
+    container_name: openvitals-jupyter-test
+    depends_on:
+      - postgres
+    ports:
+      - "8888:8888"
+    environment:
+      JUPYTER_TOKEN: ""
+      JUPYTER_PASSWORD: ""
+      JUPYTER_ENABLE_LAB: "yes"
+    volumes:
+      - ../:/workspace
+    working_dir: /workspace
+    command:
+      - /bin/bash
+      - -lc
+      - >-
+        python -m pip install --user -r /workspace/requirements.txt &&
+        start-notebook.sh --ServerApp.root_dir=/workspace --ServerApp.token='' --ServerApp.password='' --ServerApp.allow_origin='*'
+
+volumes:
+  postgres_test_data:
+  pgadmin_test_data:

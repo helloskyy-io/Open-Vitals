@@ -246,7 +246,6 @@ def write_csv(path: str, rows: Iterable[dict]) -> None:
 
 
 def main() -> None:
-    # Replace this with your actual connection info string / env-driven value
     conninfo = "host=localhost port=5432 user=openvitals dbname=openvitals password=openvitals"
 
     start_ts = "2026-01-01 00:00:00-05"

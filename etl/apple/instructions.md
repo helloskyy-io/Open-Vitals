@@ -48,10 +48,10 @@ Use that local venv when running the Apple ETL scripts.
 Use the test compose file at repo root:
 
 ```bash
-docker compose -f test.postgres.yaml up -d
+docker compose -f test.compose.yaml up -d
 ```
 
-This starts both Postgres and pgAdmin.
+This starts Postgres, pgAdmin, and Jupyter.
 
 
 ### 3) Open pgAdmin
@@ -60,6 +60,11 @@ This starts both Postgres and pgAdmin.
 - Log in with:
   - Email: `admin@example.com`
   - Password: `openvitals`
+
+
+### 3b) Open Jupyter (optional for visualization notebooks)
+
+- Open `http://localhost:8888`
 
 
 ### 4) Register the Postgres server in pgAdmin
@@ -94,6 +99,8 @@ From repo root:
 - Exploratory filtered summary (HR/steps/sleep): `python etl/apple/fetch_relevant_fields.py`
 - Parse + load relevant Apple data: `python etl/apple/load_hr_steps_sleep.py --only all`
 
+For notebook visualization, use `--only all` so all required test data is loaded (steps, sleep, and resting heart rate).
+
 If your venv is not already activated, use `.venv/bin/python` instead of `python`.
 
 Depending on how large `data/apple/export.xml` is, the load step may take a while to finish.
@@ -116,12 +123,34 @@ Optional loader filters:
 - `dbname=openvitals`
 - `password=openvitals`
 
-These should match your `test.postgres.yaml` container settings.
+These should match your `test.compose.yaml` container settings.
 
 ---
 
-## Validation queries (test only)
+## Validate data and run notebooks (test only)
 
-After loading, open [sql/test/test_queries.sql](sql/test/test_queries.sql), copy the SQL, then paste it into the pgAdmin Query Tool and run it.
+After loading, you can validate either way:
+
+### Option A) Validate in pgAdmin Query Tool
+
+Run each split query file in pgAdmin:
+
+- [sql/test/queries/01_steps_merged_daily.sql](sql/test/queries/01_steps_merged_daily.sql)
+- [sql/test/queries/02_sleep_by_stage_night_of.sql](sql/test/queries/02_sleep_by_stage_night_of.sql)
+- [sql/test/queries/03_total_sleep_per_night.sql](sql/test/queries/03_total_sleep_per_night.sql)
+- [sql/test/queries/04_resting_hr_daily.sql](sql/test/queries/04_resting_hr_daily.sql)
+
+### Option B) Validate by running notebooks
+
+Open Jupyter at `http://localhost:8888` and run these notebooks in order (Cell 1, then Cell 2):
+
+- `notebooks/01_steps_merged_daily.ipynb`
+- `notebooks/02_sleep_by_stage_night_of.ipynb`
+- `notebooks/03_total_sleep_per_night.ipynb`
+- `notebooks/04_resting_hr_daily.ipynb`
+
+Notebook connection is set to:
+
+- `postgresql+psycopg://openvitals:openvitals@postgres:5432/openvitals`
 
 
