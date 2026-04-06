@@ -12,20 +12,21 @@
 
 ## Phase 0 – Research Prototype (Class Project)
 
-**Goal:** Construct a real dataset and produce empirical findings with minimal platform complexity.
+**Goal:** Construct a real dataset and produce empirical findings using industry-standard Bronze/Silver/Gold data lake architecture from the start — no throwaway code.
 
 **Scope:**
 
-* Manual export of wearable data
-* Batch ingestion pipeline
-* Canonical data model (v0)
-* Reproduction of three core metrics (steps, sleep duration, resting heart rate)
-* Visualization and analysis
+* Manual export of wearable data (landing zone → `data/raw/`)
+* Bronze layer: deduplicated, content-addressed raw data store with manifest (`data/bronze/`)
+* Silver layer: vendor-agnostic canonical schema in Postgres, incremental parsing adapters
+* Gold layer: derived metrics (steps, sleep duration, resting heart rate), vendor comparison
+* Visualization, analysis, and reporting
 
 **Deliverables:**
 
-* Documented dataset and schema
-* Reproducible ingestion scripts/workflows
+* Bronze/Silver/Gold pipeline (code + docs)
+* Documented dataset and canonical schema
+* Reproducible ingestion from raw exports through metrics
 * Empirical comparison results
 * Academic presentation and report
 
@@ -33,18 +34,18 @@
 
 ## Phase 1 – Deterministic Ingestion Engine
 
-**Goal:** Automate and harden data ingestion without changing data semantics.
+**Goal:** Automate and harden the Bronze/Silver/Gold pipeline without changing data semantics.
 
 **Scope:**
 
-* Temporal-scheduled ingestion workflows
-* Idempotent ingestion logic
-* Incremental data updates
-* Vendor adapter interfaces
+* Temporal-scheduled ingestion workflows (Bronze ingest → Silver parse → Gold compute)
+* Idempotent, incremental ingestion logic (built on manifest from Phase 0)
+* Automated new-export detection and processing
+* Vendor adapter interfaces hardened for production
 
 **Outcome:**
 
-* Reliable, replayable ingestion of wearable data
+* Reliable, replayable, fully automated ingestion of wearable data
 
 ---
 

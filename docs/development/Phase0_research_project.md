@@ -271,119 +271,201 @@ Layout: `docker/compose/00-networks.yml`, `10-temporal.yml`, and env overrides (
 
 # Stage 1 — Export Acquisition + Dataset Datasheet
 
-### 1.1 Google Takeout export captured
+Stage 1: acquire exports, place in correct directories with correct naming; create dataset datasheet. No metadata file in Stage 1 (date in filename, source from folder; raw exports log (JSON) is Stage 2).
 
-* [ ] Create Google Takeout export for Google Fit
-* [ ] Store at `data/raw/google_fit/takeout_<YYYY-MM-DD>.zip`
-* [ ] Record export metadata:
+### 1.1 Google Takeout export captured (Member A)
 
-  * [ ] export date/time
-  * [ ] approximate date range
-  * [ ] device sources
+* [x] Create Google Takeout export (Fit, and Fitbit if desired)
+* [x] Store at `data/raw/google_fit/takeout_<YYYY-MM-DD>.zip` (or unzipped folder with that name)
 
-### 1.2 Apple Health export captured
+### 1.2 Apple Health export captured (Member B)
 
 * [ ] Export Apple Health data
 * [ ] Store at `data/raw/apple_health/apple_health_<YYYY-MM-DD>.zip`
-* [ ] Record export metadata:
 
-  * [ ] export date/time
-  * [ ] approximate date range
-  * [ ] device sources
+### 1.3 Dataset datasheet (Phase 0) — Member C or team
 
-### 1.3 Dataset datasheet (Phase 0)
+Defines the datasets used for the class project. One file, manually maintained. Copy the template below into `docs/data/dataset_description.md` and fill in.
 
-* [ ] Create `docs/dataset_description.md` with:
+**Template (copy into `docs/data/dataset_description.md`):**
 
-  * [ ] provenance
-  * [ ] time range
-  * [ ] devices
-  * [ ] known limitations
-  * [ ] privacy/ethics handling
+```markdown
+# Dataset Description (Phase 0)
 
-**Deliverables:**
+## Google (Fit + Fitbit)
 
-* [ ] `docs/dataset_description.md`
+- **Provenance:** *(Origin and how the data was obtained — e.g. “Google Takeout requested by [role] on [date]; unzipped to `data/raw/google_fit/takeout_YYYY-MM-DD/`.”)*
+- **Export date(s):** *(When the export was created — e.g. `2026-02-21`; from folder name or `raw_exports.json`.)*
+- **Time range of data:** *(Earliest to latest date actually present in the data — e.g. `2024-01-10` to `2026-02-21`; from Stage 2 date-range scan / `raw_exports.json`.)*
+- **Source:** Google Takeout — Fit, Fitbit
+- **Known limitations:** *(Gaps, caveats, or exclusions — e.g. “No heart-rate data before 2025-10”; “Some folders have no time columns.”)*
 
----
+## Apple Health
 
-# Stage 2 — Source Schema Recon (Google + Apple)
+- **Provenance:** *(Origin and how the data was obtained — e.g. “Apple Health export from iPhone; exported on [date]; stored at `data/raw/apple_health/`.”)*
+- **Export date(s):** *(When the export was created — e.g. `2026-02-15`.)*
+- **Time range of data:** *(Earliest to latest date in the export — fill when Stage 2 recon is done.)*
+- **Source:** Apple Health export
+- **Known limitations:** *(Gaps, caveats, or exclusions.)*
 
-### 2.1 Google Fit export mapping
+## Privacy / ethics
 
-* [ ] Unzip and document key directories/files for:
+- Voluntary participation; academic use only; no PII in repo. (Datasheets for Datasets.)
+```
 
-  * [ ] steps
-  * [ ] sleep
-  * [ ] heart rate
-  * [ ] daily summaries (if present)
+* [x] Create `docs/data/dataset_description.md` with the sections above (copy template, then fill in)
+  * [ ] Google section filled (provenance, export date(s), time range when known, limitations)
+  * [ ] Apple section filled (provenance, export date(s), time range when known, limitations)
+  * [ ] Privacy/ethics filled
 
-* [ ] Create `docs/source_schemas/google_fit.md`
-
-### 2.2 Apple Health export mapping
-
-* [ ] Identify XML structure and record types for:
-
-  * [ ] steps
-  * [ ] sleep sessions
-  * [ ] heart rate
-
-* [ ] Create `docs/source_schemas/apple_health.md`
+**Deferred:** Completion of the dataset datasheet (filling Google/Apple sections from live data) is deferred to Stage 3. Once the Bronze pipeline and manifest exist, we can generate or populate `dataset_description.md` from manifest metadata and circle back to mark 1.3 complete.
 
 **Deliverables:**
 
-* [ ] `docs/source_schemas/google_fit.md`
-* [ ] `docs/source_schemas/apple_health.md`
+* [ ] `docs/data/dataset_description.md` (template in place; full fill deferred to Stage 3)
 
 ---
 
-# Stage 3 — Canonical Schema v0 (Set A only)
+# Stage 2 — Source Schema Recon / Exploration & Catalog (Google + Apple)
 
-### 3.1 Define schema (document)
+Jupyter-driven exploration: notebook discovers structure, maps headers, computes date ranges, and writes catalog artifacts. This stage answers *"what's in the export?"* — it does not transform or move data. Notebooks live in `notebooks/` (see `docs/file_structure.txt`).
 
-* [ ] Create `docs/canonical_schema_v0.md` defining:
+**Notebooks:**
 
-  * [ ] `heart_rate_samples`
-  * [ ] `sleep_sessions`
-  * [ ] `step_events` *or* `daily_steps_raw`
-  * [ ] `vendor_daily_metrics` (baseline values)
-  * [ ] `ingestion_runs` (provenance)
-  * [ ] `data_sources` (vendor/device)
+* [x] `notebooks/02_google_fit_schema_recon.ipynb` (Member A)
+* [ ] `notebooks/02_apple_health_schema_recon.ipynb` (Member B)
 
-### 3.2 Implement schema (SQL)
+Notebook can write the `.md` source schema docs and raw exports log (JSON) so outputs are reproducible from the data. The knowledge gained here informs the Bronze ingestion pipeline (Stage 3) and Silver parsing adapters (Stage 4).
 
-* [ ] Create `sql/schema_v0.sql`
-* [ ] Add idempotency keys / uniqueness strategy:
+### 2.1 Google Fit export mapping (Member A) via jupyter notebook
 
-  * [ ] stable record IDs (hash of source+timestamp+type)
-  * [ ] unique constraints per table
+* [x] **Folder structure:** Map out the folder structure (e.g. `tree` or Python `pathlib`/`os.walk`). Document it (in source schema doc or as notebook output).
+* [x] **Data headers:** Map all data headers with path — for each structured file (CSV, JSON, etc.), list path and column/field headers. Document.
+* [x] **Set A mapping:** Map the required class project data to paths: steps, sleep, resting heart rate. Identify and document the path(s) used for each (e.g. steps → …, sleep → …, heart rate → …).
+* [x] **Date range:** Compute min/max dates from the key data; record for the dataset datasheet (Stage 1.3).
+* [x] **Raw exports log:** In `data/raw/google_fit/`, maintain a machine-readable JSON log file (`raw_exports.json`) — one entry per export folder with metadata (export folder name, export date from path, source, data date range, valid range used, folder/file counts, log_updated). Generate from notebook (Block 4); idempotent (replace or append entry for current export).
+* [ ] Create `docs/data/source_schemas/google_fit.md` (folder structure, data headers+paths, Set A mapping, and any non-standard file types noted). **Deferred:** Temporarily deferred to Stage 3; will revisit when Bronze automation is in place (e.g. generate from notebook output or from manifest). Circle back later.
 
-### 3.3 Apply schema
+### 2.2 Apple Health export mapping (Member B) via jupyter notebook
 
-* [ ] Add script `scripts/migrate.sh` to apply schema to Postgres
-* [ ] Validate tables created
+* [ ] **Folder structure:** Map out the folder structure; document it.
+* [ ] **Data headers:** Map all data headers with path; document.
+* [ ] **Set A mapping:** Map steps, sleep, resting heart rate to paths; document.
+* [ ] **Date range:** Compute min/max from key data; record for dataset datasheet.
+* [ ] **Raw exports log:** In `data/raw/apple_health/`, maintain a machine-readable JSON log file (e.g. `raw_exports.json`) — one entry per export with metadata (export folder, export date, source, data date range, counts, log_updated). Generate from notebook; idempotent.
+* [ ] Create `docs/data/source_schemas/apple_health.md` (structure, headers+paths, Set A mapping).
 
 **Deliverables:**
 
-* [ ] `docs/canonical_schema_v0.md`
-* [ ] `sql/schema_v0.sql`
-* [ ] `scripts/migrate.sh`
+* [ ] `notebooks/02_google_fit_schema_recon.ipynb`
+* [ ] `notebooks/02_apple_health_schema_recon.ipynb`
+* [ ] `docs/data/source_schemas/google_fit.md`
+* [ ] `docs/data/source_schemas/apple_health.md`
+* [ ] Raw exports log in JSON (e.g. `data/raw/google_fit/raw_exports.json`, `data/raw/apple_health/raw_exports.json`) — one entry per export folder with metadata; generated from notebook (idempotent)
 
 ---
 
-# Stage 4 — Notebook-First Parsing (Visibility First)
+# Stage 3 — Bronze Layer (Deduplicated Raw Data Store)
 
-> Goal: prove parsing works end-to-end before Temporalizing.
+> Goal: build the permanent, deduplicated, vendor-original-format data store. `data/raw/` is the landing zone (where exports arrive); `data/bronze/` is the permanent store (what all downstream processing reads from). The Bronze ingestion pipeline moves unique files from landing zone to Bronze, tracking everything in a manifest.
 
-### 4.1 Jupyter environment (optional)
+**Development approach:** Stage 3 is built out initially as a notebook (`notebooks/03_bronze_ingest.ipynb`) with supporting scripts under `notebooks/scripts/03_bronze_raw_data_store/`. Once the logic is stable, we will move the automation into the permanent location `src/openvitals/ingestion/bronze_ingest.py` for reuse by pipelines and (later) Temporal workflows.
+
+### 3.1 Define Bronze directory structure
+
+* [x] Create `data/bronze/google_fit/` and `data/bronze/apple_health/` (gitignored like `data/raw/`)
+* [ ] Document the Bronze layout in `docs/standards/data_management.md` (update with concrete paths and conventions)
+
+### 3.2 Build landing-zone-to-Bronze ingestion pipeline
+
+* [ ] Create ingestion logic (initially under `notebooks/scripts/03_bronze_raw_data_store/`; later promote to `src/openvitals/ingestion/bronze_ingest.py`):
+
+  * [ ] Scan landing zone export folder (e.g. `data/raw/google_fit/takeout_2026-02-21/`)
+  * [ ] Hash each file (content-addressed; e.g. SHA-256)
+  * [ ] Compare hash against existing Bronze manifest — skip duplicates
+  * [ ] Copy only unique (new) files to `data/bronze/<vendor>/`
+  * [ ] Preserve original relative folder structure within Bronze (e.g. `data/bronze/google_fit/Takeout/Fitbit/Heart Rate/...`)
+
+### 3.3 Bronze manifest / catalog
+
+* [ ] Create manifest file (JSON or Postgres table) that tracks per file:
+
+  * [ ] `file_hash` (content SHA-256)
+  * [ ] `original_path` (relative path within the export)
+  * [ ] `bronze_path` (path in Bronze store)
+  * [ ] `vendor` (google_fit, apple_health)
+  * [ ] `export_folder` (which export it came from, e.g. `takeout_2026-02-21`)
+  * [ ] `export_date` (from export folder name)
+  * [ ] `file_size`
+  * [ ] `file_type` (.csv, .json, .xml, .tcx, etc.)
+  * [ ] `ingested_at` (timestamp when added to Bronze)
+  * [ ] `processed_to_silver` (boolean or timestamp; initially false — used by Stage 4 for incremental processing)
+
+* [ ] Manifest is append-only and idempotent: re-running the pipeline on the same export adds nothing new
+
+### 3.4 Notebook / validation
+
+* [ ] Create notebook `notebooks/03_bronze_ingest.ipynb` that calls the scripts in `notebooks/scripts/03_bronze_raw_data_store/` (or inlines the logic initially):
+
+  * [ ] Run pipeline on Google Fit export
+  * [ ] Run pipeline on Apple Health export (when available)
+  * [ ] Print summary: files scanned, files added (new), files skipped (duplicate), total in Bronze
+  * [ ] Validate: Bronze file count matches manifest; no orphans
+
+### 3.5 Future: second export test (post-class)
+
+* [ ] Download a new Google Takeout export (e.g. March 2026)
+* [ ] Place in `data/raw/google_fit/takeout_2026-03-XX/`
+* [ ] Run Bronze pipeline — verify only new/changed files are added
+* [ ] Verify manifest is updated correctly
+
+**Deliverables:**
+
+* [ ] `data/bronze/` directory structure (gitignored)
+* [ ] Bronze ingestion scripting under `notebooks/scripts/03_bronze_raw_data_store/` (initially); later promote to `src/openvitals/ingestion/bronze_ingest.py`
+* [ ] Bronze manifest (JSON file or Postgres table)
+* [ ] `notebooks/03_bronze_ingest.ipynb`
+* [ ] Updated `docs/standards/data_management.md` with concrete Bronze paths and conventions
+
+---
+
+# Stage 4 — Silver Layer (Canonical Schema + Parsing)
+
+> Goal: define the vendor-agnostic canonical schema and build parsing adapters that read from Bronze and write to Silver tables in Postgres. Adapters use the Bronze manifest to process only files not yet in Silver (incremental).
+
+### 4.1 Jupyter environment
 
 * [x] Bring up `jupyter` service (in dev, Genesis brings it up and verifies it; see Stage 0.4)
 * [ ] Create `notebooks/00_environment_check.ipynb`
 
   * [ ] test DB connection
-  * [ ] confirm exports accessible
+  * [ ] confirm Bronze store accessible
 
-### 4.2 Google ingestion (Member A)
+### 4.2 Define canonical schema (document)
+
+* [ ] Create `docs/canonical_schema_v0.md` defining:
+
+  * [ ] `heart_rate_samples` (timestamp, bpm, source, device, provenance)
+  * [ ] `sleep_sessions` (start, end, duration, stages if available, source, provenance)
+  * [ ] `step_events` *or* `daily_steps_raw` (timestamp/date, count, source, provenance)
+  * [ ] `vendor_daily_metrics` (baseline values from vendor)
+  * [ ] `ingestion_runs` (provenance: run_id, vendor, export, timestamp, files_processed)
+  * [ ] `data_sources` (vendor, device, export metadata)
+
+### 4.3 Implement schema (SQL)
+
+* [ ] Create `sql/schema_v0.sql`
+* [ ] Add idempotency keys / uniqueness strategy:
+
+  * [ ] stable record IDs (hash of source + timestamp + type)
+  * [ ] unique constraints per table
+
+### 4.4 Apply schema
+
+* [ ] Add script `scripts/migrate.sh` to apply schema to Postgres
+* [ ] Validate tables created
+
+### 4.5 Google Fit parsing adapters (Member A)
 
 * [ ] Create adapter scaffolding:
 
@@ -392,16 +474,19 @@ Layout: `docker/compose/00-networks.yml`, `10-temporal.yml`, and env overrides (
   * [ ] `src/openvitals/adapters/google_fit/parse_sleep.py`
   * [ ] `src/openvitals/adapters/google_fit/parse_heart_rate.py`
 
-* [ ] Create notebook `notebooks/10_google_fit_parse.ipynb`
+* [ ] Adapters read from `data/bronze/google_fit/` (not `data/raw/`)
+* [ ] Adapters use Bronze manifest to process only files where `processed_to_silver` is false
+* [ ] After successful parse + upsert, mark files as processed in manifest
 
-  * [ ] load zip/unzipped folder
-  * [ ] parse steps → canonical dataframe
-  * [ ] parse sleep → canonical dataframe
-  * [ ] parse HR → canonical dataframe
-  * [ ] upsert into Postgres
+* [ ] Create notebook `notebooks/10_google_fit_parse.ipynb`:
+
+  * [ ] parse steps → canonical dataframe → upsert into Postgres
+  * [ ] parse sleep → canonical dataframe → upsert into Postgres
+  * [ ] parse HR → canonical dataframe → upsert into Postgres
   * [ ] validate counts + date range
+  * [ ] update Bronze manifest (`processed_to_silver`)
 
-### 4.3 Apple ingestion (Member B)
+### 4.6 Apple Health parsing adapters (Member B)
 
 * [ ] Create adapter scaffolding:
 
@@ -410,15 +495,21 @@ Layout: `docker/compose/00-networks.yml`, `10-temporal.yml`, and env overrides (
   * [ ] `src/openvitals/adapters/apple_health/parse_sleep.py`
   * [ ] `src/openvitals/adapters/apple_health/parse_heart_rate.py`
 
-* [ ] Create notebook `notebooks/11_apple_health_parse.ipynb`
+* [ ] Adapters read from `data/bronze/apple_health/`
+* [ ] Incremental: use Bronze manifest, same pattern as Google
 
-  * [ ] parse XML
-  * [ ] extract steps, sleep, HR
+* [ ] Create notebook `notebooks/11_apple_health_parse.ipynb`:
+
+  * [ ] parse XML → canonical dataframes
   * [ ] upsert into Postgres
   * [ ] validate counts + date range
+  * [ ] update Bronze manifest
 
 **Deliverables:**
 
+* [ ] `docs/canonical_schema_v0.md`
+* [ ] `sql/schema_v0.sql`
+* [ ] `scripts/migrate.sh`
 * [ ] `src/openvitals/adapters/google_fit/*`
 * [ ] `src/openvitals/adapters/apple_health/*`
 * [ ] `notebooks/10_google_fit_parse.ipynb`
@@ -426,7 +517,9 @@ Layout: `docker/compose/00-networks.yml`, `10-temporal.yml`, and env overrides (
 
 ---
 
-# Stage 5 — Metric Reproduction (Set A)
+# Stage 5 — Gold Layer (Metrics + Comparison)
+
+> Goal: compute derived metrics from Silver tables and produce comparison results. Gold is aggregated, computed, and optimized for visualization and reporting.
 
 ### 5.1 Define metric methods
 
@@ -436,30 +529,20 @@ Layout: `docker/compose/00-networks.yml`, `10-temporal.yml`, and env overrides (
   * [ ] sleep duration/day method
   * [ ] resting HR method (assumptions)
 
-### 5.2 Implement metrics (Member C)
+### 5.2 Implement metrics
 
 * [ ] Create `src/openvitals/analytics/set_a.py`:
 
-  * [ ] `compute_daily_steps()`
-  * [ ] `compute_daily_sleep_duration()`
-  * [ ] `compute_daily_resting_hr()`
+  * [ ] `compute_daily_steps()` — reads from Silver `step_events` / `daily_steps_raw`
+  * [ ] `compute_daily_sleep_duration()` — reads from Silver `sleep_sessions`
+  * [ ] `compute_daily_resting_hr()` — reads from Silver `heart_rate_samples`
 
 * [ ] Create notebook `notebooks/20_metrics_set_a.ipynb`:
 
-  * [ ] compute and store derived metrics tables
+  * [ ] compute and store derived metrics tables (Gold)
   * [ ] export derived metrics CSV
 
-**Deliverables:**
-
-* [ ] `docs/metrics/set_a_definitions.md`
-* [ ] `src/openvitals/analytics/set_a.py`
-* [ ] `notebooks/20_metrics_set_a.ipynb`
-
----
-
-# Stage 6 — Vendor Comparison + Empirical Evaluation
-
-### 6.1 Vendor baseline values
+### 5.3 Vendor comparison + empirical evaluation
 
 * [ ] Identify vendor-provided daily metrics in exports (if available)
 
@@ -468,9 +551,7 @@ Layout: `docker/compose/00-networks.yml`, `10-temporal.yml`, and env overrides (
   * [ ] Manual capture sample from app UI (document method)
   * [ ] Treat cross-platform comparison as baseline (document)
 
-* [ ] Store baseline into `vendor_daily_metrics`
-
-### 6.2 Compute evaluation metrics
+* [ ] Store baseline into `vendor_daily_metrics` (Silver)
 
 * [ ] Create `src/openvitals/analytics/evaluation.py`:
 
@@ -478,7 +559,7 @@ Layout: `docker/compose/00-networks.yml`, `10-temporal.yml`, and env overrides (
   * [ ] correlation (Pearson + Spearman)
   * [ ] error metrics (MAE, RMSE)
 
-* [ ] Create notebook `notebooks/30_vendor_comparison.ipynb`
+* [ ] Create notebook `notebooks/30_vendor_comparison.ipynb`:
 
   * [ ] join vendor vs reproduced
   * [ ] compute evaluation
@@ -486,15 +567,18 @@ Layout: `docker/compose/00-networks.yml`, `10-temporal.yml`, and env overrides (
 
 **Deliverables:**
 
+* [ ] `docs/metrics/set_a_definitions.md`
+* [ ] `src/openvitals/analytics/set_a.py`
 * [ ] `src/openvitals/analytics/evaluation.py`
+* [ ] `notebooks/20_metrics_set_a.ipynb`
 * [ ] `notebooks/30_vendor_comparison.ipynb`
 * [ ] `data/processed/comparison_results.csv` *(generated)*
 
 ---
 
-# Stage 7 — Visuals + Reporting Assets (No UI)
+# Stage 6 — Visuals + Reporting Assets (No UI)
 
-### 7.1 Generate required figures (Member C)
+### 6.1 Generate required figures
 
 * [ ] Create `src/openvitals/analysis/plots.py` or notebook `notebooks/40_plots.ipynb`
 * [ ] Generate and save figures to `reports/figures/`:
@@ -504,7 +588,7 @@ Layout: `docker/compose/00-networks.yml`, `10-temporal.yml`, and env overrides (
   * [ ] `rhr_vendor_vs_reproduced.png`
   * [ ] `data_coverage_missingness.png`
 
-### 7.2 Captions and figure index
+### 6.2 Captions and figure index
 
 * [ ] Create `reports/figures/README.md` listing:
 
@@ -520,31 +604,31 @@ Layout: `docker/compose/00-networks.yml`, `10-temporal.yml`, and env overrides (
 
 ---
 
-# Stage 8 — Temporalization (Bonus, time-permitting)
+# Stage 7 — Temporalization (Bonus, time-permitting)
 
 > Goal: demonstrate Temporal's value without blocking Phase 0. Code lives under `src/openvitals/orchestration/temporal/` (see `docs/file_structure.txt`). **Deployment flow:** Bootstrap (Stage 0.3) brings up Temporal; Genesis (Stage 0.4) deploys OpenVitals Postgres and runs migrations. See `docs/standards/temporal_standards.md` and `docs/standards/temporal_deployment.md`.
 
-### 8.1 Extract logic from notebooks
+### 7.1 Extract logic from notebooks
 
-* [ ] Ensure parse + compute functions live in `src/openvitals/` modules (adapters, analytics)
+* [ ] Ensure parse + compute functions live in `src/openvitals/` modules (adapters, analytics, ingestion)
 * [ ] Ensure idempotent upserts
 
-### 8.2 Implement minimal workflows and activities
+### 7.2 Implement minimal workflows and activities
 
 * [x] **Genesis workflow** — Implemented in `modules/platform/provision/genesis_workflow.py`: load_config → load_secrets → helper validate/compile plan → execute plan (activities via `execute_activity(..., args=activity_args)`). Helper in `genesis_helper.py` (validate_genesis_config, compile_execution_plan). Activities implemented: load_config, load_secrets, docker_compose_up, verify_postgres_up, verify_jupyter_up, verify_pgadmin_up (dev). [ ] Remaining: create_db_user, run_migrations (add to plan when implemented). See **Stage 0.4** for full activity list.
 
 * [ ] **Ingestion module** — Create `src/openvitals/orchestration/temporal/modules/ingestion/workflows.py`:
 
-  * [ ] `IngestExportsWorkflow`: ingest Google export, ingest Apple export, compute Set A metrics, produce run summary
+  * [ ] `IngestExportsWorkflow`: Bronze ingest → Silver parse → Gold metrics → run summary
 
 * [ ] **Shared activities** — Implement (or stub) in `src/openvitals/orchestration/temporal/activities/`:
 
   * [x] Genesis (current): `config/load_config.py`, `secrets/load_secrets.py`, `db/docker_compose_up.py`, `db/verify_postgres_up.py`, `dev/verify_jupyter_up.py`. [ ] Remaining: `db/create_db_user.py`, `db/run_migrations.py`.
-  * [ ] `db_migrate.py`, `ingest_apple.py`, `ingest_google.py`, `compute_metrics.py`, `export_figures.py` (as needed for ingestion)
+  * [ ] `bronze_ingest.py`, `ingest_apple.py`, `ingest_google.py`, `compute_metrics.py`, `export_figures.py` (as needed for ingestion)
 
 * [x] **Worker** — `src/openvitals/orchestration/temporal/worker.py`: starts worker, registers GenesisWorkflow and Genesis activities (load_config, load_secrets, docker_compose_up, verify_postgres_up). Started by bootstrap (Stage 0.3). Register additional activities when create_db_user, run_migrations, ingestion are implemented.
 
-### 8.3 Demo artifacts
+### 7.3 Demo artifacts
 
 * [ ] Capture Temporal UI screenshots
 * [ ] Record workflow history notes
@@ -560,20 +644,20 @@ Layout: `docker/compose/00-networks.yml`, `10-temporal.yml`, and env overrides (
 
 ---
 
-# Stage 9 — Final Class Deliverables
+# Stage 8 — Final Class Deliverables
 
-### 9.1 Report
+### 8.1 Report
 
 * [ ] Create `reports/final_report.md` structured per rubric:
 
   * [ ] intro + motivation
   * [ ] related work
   * [ ] data (datasheet summary)
-  * [ ] methods
+  * [ ] methods (Bronze/Silver/Gold pipeline architecture)
   * [ ] results
   * [ ] discussion + future work
 
-### 9.2 Presentation
+### 8.2 Presentation
 
 * [ ] Create `reports/presentation_outline.md`
 * [ ] Select only best figures
@@ -590,12 +674,12 @@ Layout: `docker/compose/00-networks.yml`, `10-temporal.yml`, and env overrides (
 
 Phase 0 is complete when:
 
-* Canonical schema v0 exists and is applied
-* Both exports ingest successfully into Postgres
-* Set A metrics are computed and stored
-* Vendor comparison is completed (or baseline strategy documented)
+* Bronze layer exists: deduplicated raw store with manifest, populated from at least one export per vendor
+* Silver layer exists: canonical schema applied to Postgres, both exports parsed and loaded via adapters
+* Gold layer exists: Set A metrics computed and stored; vendor comparison completed (or baseline strategy documented)
 * Figures are generated and usable in slides
 * Final report and presentation materials exist
+* Architecture follows Bronze/Silver/Gold data lake principles throughout
 
 ---
 
@@ -606,5 +690,5 @@ Phase 0 is complete when:
 * No Django UI/backend
 * Temporal integration is bonus (scaffold only is acceptable)
 * Only Set A metrics
-
+* Second-export incremental test is designed for but not required for class submission
 
